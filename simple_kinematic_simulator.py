@@ -71,7 +71,7 @@ def distance_to_sensor_reading(distance):
 def get_sensor_distance(angle):
     angle = angle / 180 * math.pi # Convert to radians
     #simple single-ray sensor
-    ray = LineString([(x, y), (x+cos(q + angle)*2*W,-(y+sin(q + angle)*2*H)) ])  # a line from robot to a point outside arena in direction of q
+    ray = LineString([(x, y), (-(y + sin(q + angle) * 2 * H), x + cos(q + angle) * 2 * W) ])  # a line from robot to a point outside arena in direction of q
     s = world.intersection(ray)
     distance = sqrt((s.x-x)**2+(s.y-y)**2) - 0.05                    # distance to wall
 
