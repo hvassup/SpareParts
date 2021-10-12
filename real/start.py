@@ -3,23 +3,14 @@ import os
 
 # initialize asebamedulla in background and wait 0.3s to let
 # asebamedulla startup
+from shared.util import sensor_readings_to_motor_speeds
+
 os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
 from time import sleep
 import dbus
 import dbus.mainloop.glib
 from threading import Thread
 
-
-def sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5):
-    sensor1 /= 5020
-    sensor2 /= 5020
-    sensor3 /= 5020
-    sensor4 /= 5020
-    sensor5 /= 5020
-
-    left_mult = 1 - (sensor4 + sensor5) + sensor3 / 10
-    right_mult = 1 - (sensor1 + sensor2) - sensor3 / 10
-    return left_mult, right_mult
 
 
 class Thymio:
