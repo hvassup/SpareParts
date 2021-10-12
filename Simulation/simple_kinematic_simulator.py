@@ -4,15 +4,17 @@ import shapely
 from shapely.geometry import LinearRing, LineString, Point
 from numpy import sin, cos, pi, sqrt
 from random import random
+import numpy as np
+import cv2
 
-from visualizer import plot_lidar
+from visualizer import plot_lidar, show_lidar
 
 
 # Constants
 R = 0.043  # radius of wheels in meters
 L = 0.092  # distance between wheels in meters
 
-W = 2.0  # width of arena
+W = 4.0  # width of arena
 H = 2.0  # height of arena
 
 robot_timestep = 0.1        # 1/robot_timestep equals update frequency of robot
@@ -73,10 +75,30 @@ def get_lidar(resolution=360):
     return [get_sensor_distance(i) for i in range(0, resolution)]
 
 
-
 # Simulation loop
 
+def sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5):
+    sensor1 /= 5020
+    sensor2 /= 5020
+    sensor3 /= 5020
+    sensor4 /= 5020
+    sensor5 /= 5020
+    
+    left_mult = 1 - (sensor4 + sensor5) + sensor3 / 10
+    right_mult = 1 - (sensor1 + sensor2) - sensor3 / 10
+    return left_mult, right_mult
+
+
 file = open("trajectory.dat", "w")
+
+import pygame
+
+def init_screen():
+    pygame.init()
+    pygame.display.init()
+    return pygame.display.set_mode((320,240))
+
+# surface = init_screen()
 
 for cnt in range(5000):
     #simple controller - change direction of wheels every 10 seconds (100*robot_timestep) unless close to wall then turn on spot
@@ -86,8 +108,10 @@ for cnt in range(5000):
     sensor4 = distance_to_sensor_reading(get_sensor_distance(-15))
     sensor5 = distance_to_sensor_reading(get_sensor_distance(-30))
 
-    plot_lidar(x, y, get_lidar(), world)
-    exit()
+    lidar_points = get_lidar()
+    # print(cv2.minAreaRect(np.asarray(lidar_points).astype(np.int)))
+    # show_lidar(x, y, lidar_points, surface)
+    plot_lidar(x, y, lidar_points, world)
 
     ## print(sensor1, sensor2, sensor3, sensor4, sensor5)
     left_mult, right_mult = sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
