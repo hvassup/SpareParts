@@ -4,6 +4,7 @@ from shapely.geometry import LinearRing, LineString, Point
 from numpy import sin, cos, pi, sqrt
 from random import random
 
+from visualizer import plot_lidar
 # A prototype simulation of a differential-drive robot with one sensor
 
 # Constants
@@ -69,7 +70,11 @@ def get_sensor_distance(angle):
 
     distance = sqrt((s.x-x)**2+(s.y-y)**2) - 0.05                    # distance to wall
 
-    return distance_to_sensor_reading(distance)
+    return distance
+
+def get_lidar(resolution=360):
+    return [get_sensor_distance(i) for i in range(0, resolution)]
+
 
 # Simulation loop
 #################
@@ -77,12 +82,15 @@ file = open("trajectory.dat", "w")
 
 for cnt in range(5000):
     #simple controller - change direction of wheels every 10 seconds (100*robot_timestep) unless close to wall then turn on spot
-    sensor1 = get_sensor_distance(30)
-    sensor2 = get_sensor_distance(15)
-    sensor3 = get_sensor_distance(0)
-    sensor4 = get_sensor_distance(-15)
-    sensor5 = get_sensor_distance(-30)
-    
+    sensor1 = distance_to_sensor_reading(get_sensor_distance(30))
+    sensor2 = distance_to_sensor_reading(get_sensor_distance(15))
+    sensor3 = distance_to_sensor_reading(get_sensor_distance(0))
+    sensor4 = distance_to_sensor_reading(get_sensor_distance(-15))
+    sensor5 = distance_to_sensor_reading(get_sensor_distance(-30))
+
+    print(get_lidar())
+    plot_lidar(0, 0, get_lidar())
+    exit()
 
     ## print(sensor1, sensor2, sensor3, sensor4, sensor5)
     left_mult, right_mult = sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
