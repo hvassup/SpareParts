@@ -101,7 +101,8 @@ def init_screen():
 # surface = init_screen()
 
 for cnt in range(5000):
-    # simple controller - change direction of wheels every 10 seconds (100*robot_timestep) unless close to wall then turn on spot
+    # simple controller - change direction of wheels every 10 seconds (100*robot_timestep) unless close to wall then
+    # turn on spot
     sensor1 = distance_to_sensor_reading(get_sensor_distance(30))
     sensor2 = distance_to_sensor_reading(get_sensor_distance(15))
     sensor3 = distance_to_sensor_reading(get_sensor_distance(0))
@@ -113,7 +114,7 @@ for cnt in range(5000):
     # show_lidar(x, y, lidar_points, surface)
     plot_lidar(x, y, lidar_points, world)
 
-    ## print(sensor1, sensor2, sensor3, sensor4, sensor5)
+    # print(sensor1, sensor2, sensor3, sensor4, sensor5)
     left_mult, right_mult = sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
     print(left_mult, right_mult, sensor3, q * 180 / math.pi)
     # if cnt%1000==0:
@@ -125,7 +126,7 @@ for cnt in range(5000):
     simulationstep(left_wheel_velocity * left_mult, right_wheel_velocity * right_mult)
 
     # check collision with arena walls
-    if (world.distance(Point(x, y)) < L / 2):
+    if world.distance(Point(x, y)) < L / 2:
         file.write(str(x) + ", " + str(y) + ", " + str(cos(q) * 0.05) + ", " + str(sin(q) * 0.05) + "\n")
         print('Collision!', q, x, y)
         print(cnt, 'Steps')

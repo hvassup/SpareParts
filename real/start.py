@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 import os
+
 # initialize asebamedulla in background and wait 0.3s to let
 # asebamedulla startup
 os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
-import matplotlib.pyplot as plt
 from time import sleep
 import dbus
 import dbus.mainloop.glib
 from threading import Thread
+
 
 def sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5):
     sensor1 /= 5020
@@ -15,10 +16,11 @@ def sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
     sensor3 /= 5020
     sensor4 /= 5020
     sensor5 /= 5020
-    
+
     left_mult = 1 - (sensor4 + sensor5) + sensor3 / 10
     right_mult = 1 - (sensor1 + sensor2) - sensor3 / 10
     return left_mult, right_mult
+
 
 class Thymio:
     def __init__(self):
@@ -40,7 +42,8 @@ class Thymio:
 
     def get_motor_multipliers(self):
         prox_horizontal = self.aseba.GetVariable("thymio-II", "prox.horizontal")
-        return sensor_readings_to_motor_speeds(prox_horizontal[0], prox_horizontal[1], prox_horizontal[2], prox_horizontal[3], prox_horizontal[4])
+        return sensor_readings_to_motor_speeds(prox_horizontal[0], prox_horizontal[1], prox_horizontal[2],
+                                               prox_horizontal[3], prox_horizontal[4])
 
     def sens(self):
         while True:
@@ -52,7 +55,7 @@ class Thymio:
             print(prox_horizontal[3])
             print(prox_horizontal[4])
 
-############## Bus and aseba setup ######################################
+    ############## Bus and aseba setup ######################################
 
     def setup(self):
         print("Setting up")
@@ -85,13 +88,12 @@ class Thymio:
         print("dbus error: %s" % str(e))
 
 
-
-#------------------ Main loop here -------------------------
+# ------------------ Main loop here -------------------------
 
 def main():
     robot = Thymio()
 
-    #robot.sens()
+    # robot.sens()
 
     thread = Thread(target=robot.sens)
     thread.daemon = True
@@ -103,7 +105,7 @@ def main():
     robot.stop()
 
 
-#------------------- Main loop end ------------------------
+# ------------------- Main loop end ------------------------
 
 if __name__ == '__main__':
     try:
@@ -114,6 +116,5 @@ if __name__ == '__main__':
         sleep(1)
         os.system("pkill -n asebamedulla")
         print("asebamodulla killed")
-
 
 ## TEST
