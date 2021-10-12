@@ -1,16 +1,18 @@
 # A prototype simulation of a differential-drive robot with one sensor
 import math
+from random import random
 
 from numpy import sin, cos, sqrt
 from shapely.geometry import LinearRing, LineString, Point
 
-from visualizer import plot_lidar
+from Simulation.visualization.pygame_visualizer import PyGameVisualizer
+from shared.util import sensor_readings_to_motor_speeds
 
 # Constants
 R = 0.043  # radius of wheels in meters
 L = 0.092  # distance between wheels in meters
 
-W = 4.0  # width of arena
+W = 2.0  # width of arena
 H = 2.0  # height of arena
 
 robot_timestep = 0.1  # 1/robot_timestep equals update frequency of robot
@@ -21,9 +23,9 @@ world = LinearRing([(W / 2, H / 2), (-W / 2, H / 2), (-W / 2, -H / 2), (W / 2, -
 
 # Variables
 
-x = 0.0  # robot position in meters - x direction - positive to the right
-y = H / 3  # robot position in meters - y direction - positive up
-q = math.pi  # robot heading with respect to x-axis in radians
+x = 0.8  # robot position in meters - x direction - positive to the right
+y = 0.0  # robot position in meters - y direction - positive up
+q = 0.0  # robot heading with respect to x-axis in radians
 
 left_wheel_velocity = 1  # robot left wheel velocity in radians/s
 right_wheel_velocity = 1  # robot right wheel velocity in radians/s
@@ -47,6 +49,17 @@ def simulationstep(_left_wheel_velocity, _right_wheel_velocity):
 
 
 def distance_to_sensor_reading(distance):
+    """
+    Takes a distance in meters and returns a simulated sensor reading
+    Parameters
+        ----------
+        distance : number
+            The distance from the robot to the world in meters
+    Returns
+    -------
+        float
+            number between 0 and 5020
+    """
     distance -= 0.05  # Simulate, that the sensors are not perfectly centered on the robot
 
     max_dist = 0.1
@@ -58,10 +71,16 @@ def distance_to_sensor_reading(distance):
 
 
 def get_sensor_distance(angle):
+    """
+    Shoot a ray from the robot in a direction, and return distance
+    :param angle: the angle relative to the robot's angle
+    :return: distance from robot to world
+    """
     angle = angle / 180 * math.pi  # Convert to radians
     # simple single-ray sensor
-    ray = LineString([(x, y), (x + cos(q + angle) * 2 * W, (
-            y + sin(q + angle) * 2 * H))])  # a line from robot to a point outside arena in direction of q
+    scalar = 10
+    ray = LineString([(x, y), (x + cos(q + angle) * scalar, (y + sin(q + angle) * scalar))])
+    # a line from robot to a point outside arena in direction of q
     s = world.intersection(ray)
 
     distance = sqrt((s.x - x) ** 2 + (s.y - y) ** 2)  # distance to wall
@@ -70,36 +89,20 @@ def get_sensor_distance(angle):
 
 
 def get_lidar(resolution=360):
-    return [get_sensor_distance(i) for i in range(0, resolution)]
+    """
+    Shoot rays out in all directions
+    :param resolution: How many rays to shoot out (Default 360)
+    :return: a list of distances from the robot, to the world
+    """
+    return [get_sensor_distance(360 / resolution * i) for i in range(0, resolution)]
 
 
-# Simulation loop
-
-def sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5):
-    sensor1 /= 5020
-    sensor2 /= 5020
-    sensor3 /= 5020
-    sensor4 /= 5020
-    sensor5 /= 5020
-
-    left_mult = 1 - (sensor4 + sensor5) + sensor3 / 10
-    right_mult = 1 - (sensor1 + sensor2) - sensor3 / 10
-    return left_mult, right_mult
-
+visualizer = PyGameVisualizer()
+# visualizer = MatPlotVisualizer()
 
 file = open("trajectory.dat", "w")
-
-import pygame
-
-
-def init_screen():
-    pygame.init()
-    pygame.display.init()
-    return pygame.display.set_mode((320, 240))
-
-
-# surface = init_screen()
-
+turn_counter = 0
+# Simulation loop
 for cnt in range(5000):
     # simple controller - change direction of wheels every 10 seconds (100*robot_timestep) unless close to wall then
     # turn on spot
@@ -109,19 +112,20 @@ for cnt in range(5000):
     sensor4 = distance_to_sensor_reading(get_sensor_distance(-15))
     sensor5 = distance_to_sensor_reading(get_sensor_distance(-30))
 
-    lidar_points = get_lidar()
-    # print(cv2.minAreaRect(np.asarray(lidar_points).astype(np.int)))
-    # show_lidar(x, y, lidar_points, surface)
-    plot_lidar(x, y, lidar_points, world)
+    lidar_points = get_lidar(50)
 
-    # print(sensor1, sensor2, sensor3, sensor4, sensor5)
+    visualizer.visualize_lidar(x, y, lidar_points)
+
     left_mult, right_mult = sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
     print(left_mult, right_mult, sensor3, q * 180 / math.pi)
-    # if cnt%1000==0:
-    #     left_wheel_velocity = random()
-    #     right_wheel_velocity = random()
-    # left_wheel_velocity *= left_mult
-    # right_wheel_velocity *= right_mult
+    if cnt % 1000 == 0:
+        left_wheel_velocity, right_wheel_velocity = (random(), random())
+
+    if left_wheel_velocity != 1 or right_wheel_velocity != 1:
+        turn_counter += 1
+        if turn_counter % 100 == 0:
+            left_wheel_velocity, right_wheel_velocity = (1, 1)
+
     # step simulation
     simulationstep(left_wheel_velocity * left_mult, right_wheel_velocity * right_mult)
 
@@ -136,7 +140,3 @@ for cnt in range(5000):
         file.write(str(x) + ", " + str(y) + ", " + str(cos(q) * 0.05) + ", " + str(sin(q) * 0.05) + "\n")
 
 file.close()
-
-import visualizer
-
-visualizer.visualize()
