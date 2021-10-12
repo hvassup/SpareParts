@@ -1,3 +1,4 @@
+# A prototype simulation of a differential-drive robot with one sensor
 import math
 import shapely
 from shapely.geometry import LinearRing, LineString, Point
@@ -5,10 +6,9 @@ from numpy import sin, cos, pi, sqrt
 from random import random
 
 from visualizer import plot_lidar
-# A prototype simulation of a differential-drive robot with one sensor
+
 
 # Constants
-###########
 R = 0.043  # radius of wheels in meters
 L = 0.092  # distance between wheels in meters
 
@@ -16,28 +16,26 @@ W = 2.0  # width of arena
 H = 2.0  # height of arena
 
 robot_timestep = 0.1        # 1/robot_timestep equals update frequency of robot
-simulation_timestep = 0.01  # timestep in kinematics sim (probably don't touch..)
+simulation_timestep = 0.01  # timestep in kinematics sim (probably don't touch)
 
 # the world is a rectangular arena with width W and height H
 world = LinearRing([(W/2,H/2),(-W/2,H/2),(-W/2,-H/2),(W/2,-H/2)])
-obstacle = LinearRing([(W/4,H/4),(-W/4,H/4),(-W/4,-H/4),(W/4,-H/4)])
 
 import matplotlib.pyplot as plt
 
 # Variables 
-###########
 
-x = W/3   # robot position in meters - x direction - positive to the right 
-y = 0.0   # robot position in meters - y direction - positive up
+x = 0.0   # robot position in meters - x direction - positive to the right 
+y = H/3   # robot position in meters - y direction - positive up
 q = math.pi   # robot heading with respect to x-axis in radians 
 
 left_wheel_velocity = 1   # robot left wheel velocity in radians/s
 right_wheel_velocity = 1  # robot right wheel velocity in radians/s
 
 # Kinematic model
-#################
+
 # updates robot position and heading based on velocity of wheels and the elapsed time
-# the equations are a forward kinematic model of a two-wheeled robot - don't worry just use it
+# the equations are a forward kinematic model of a two-wheeled robot
 def simulationstep(_left_wheel_velocity, _right_wheel_velocity):
     global x, y, q
 
@@ -52,6 +50,8 @@ def simulationstep(_left_wheel_velocity, _right_wheel_velocity):
 
 
 def distance_to_sensor_reading(distance):
+    distance -= 0.05 # Simulate, that the sensors are not perfectly centered on the robot
+
     max_dist = 0.1
     max_reading = 5020
     
@@ -63,12 +63,9 @@ def get_sensor_distance(angle):
     angle = angle / 180 * math.pi # Convert to radians
     #simple single-ray sensor
     ray = LineString([(x, y), (x + cos(q + angle) * 2 * W, (y + sin(q + angle) * 2 * H)) ])  # a line from robot to a point outside arena in direction of q
-    s = world.union(obstacle).intersection(ray)
-    
-    if type(s) is shapely.geometry.multipoint.MultiPoint:
-        s = s[-1]
+    s = world.intersection(ray)
 
-    distance = sqrt((s.x-x)**2+(s.y-y)**2) - 0.05                    # distance to wall
+    distance = sqrt((s.x-x) ** 2 + (s.y-y) ** 2)                   # distance to wall
 
     return distance
 
@@ -76,8 +73,9 @@ def get_lidar(resolution=360):
     return [get_sensor_distance(i) for i in range(0, resolution)]
 
 
+
 # Simulation loop
-#################
+
 file = open("trajectory.dat", "w")
 
 for cnt in range(5000):
@@ -88,8 +86,7 @@ for cnt in range(5000):
     sensor4 = distance_to_sensor_reading(get_sensor_distance(-15))
     sensor5 = distance_to_sensor_reading(get_sensor_distance(-30))
 
-    print(get_lidar())
-    plot_lidar(0, 0, get_lidar())
+    plot_lidar(x, y, get_lidar(), world)
     exit()
 
     ## print(sensor1, sensor2, sensor3, sensor4, sensor5)
