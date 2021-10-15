@@ -5,7 +5,8 @@ from random import random
 from numpy import sin, cos, sqrt
 from shapely.geometry import LinearRing, LineString, Point
 
-from Simulation.visualization.pygame_visualizer import PyGameVisualizer
+from simulation.visualization.pygame_visualizer import PyGameVisualizer
+
 from shared.util import sensor_readings_to_motor_speeds
 
 # Constants
