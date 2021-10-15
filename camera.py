@@ -4,24 +4,37 @@ from picamera import PiCamera
 import time
 import numpy as np
 import cv2
+import apriltag
 
 #initialize
 
 camera = PiCamera()
 
-def testCamera():
-    print("Camera test")
+def takePicture():
+    print("Taking picture!")
     camera.start_preview()
     time.sleep(5)
     #we capture to openCV compatible format
-    #you might want to increase resolution
-    camera.resolution = (320, 240)
+    camera.resolution = (640, 480)
     camera.framerate = 24
     time.sleep(2)
-    image = np.empty((240, 320, 3), dtype=np.uint8)
-    camera.capture(image, 'bgr')
-    cv2.imwrite('out.png', image)
-    camera.stop_preview()
-    print("saved image to out.png")
 
-testCamera()
+    image = np.empty((480, 640, 3), dtype=np.uint8)
+    camera.capture(image, 'bgr')
+    flippedImage = cv2.flip(image, -1)
+    cv2.imwrite('example.png', flippedImage)
+    camera.stop_preview()
+    print("saved image to example.png")
+
+def checkTag():
+    img = cv2.imread('example.png',0)
+    print("[INFO] detecting AprilTags...")
+    options = apriltag.DetectorOptions(families="tag36h11")
+    detector = apriltag.Detector(options)
+    results = detector.detect(img)
+    print("[INFO] {} total AprilTags detected".format(len(results)))
+    print("Tag: ", results)
+
+
+takePicture()
+checkTag()
