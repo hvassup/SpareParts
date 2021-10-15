@@ -2,8 +2,8 @@ import math
 
 import matplotlib.pyplot as plt
 
-from Simulation.visualization.shared import get_lidar_points
-from Simulation.visualization.visualizer import Visualizer
+from simulation.visualization.shared import get_lidar_points
+from simulation.visualization.visualizer import Visualizer
 
 
 class MatPlotVisualizer(Visualizer):
