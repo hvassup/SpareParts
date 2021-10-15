@@ -4,6 +4,7 @@ from random import random
 
 from numpy import sin, cos, sqrt
 from shapely.geometry import LinearRing, LineString, Point
+from simulation import visualization
 
 from simulation.visualization.pygame_visualizer import PyGameVisualizer
 
@@ -14,7 +15,7 @@ R = 0.043  # radius of wheels in meters
 L = 0.092  # distance between wheels in meters
 
 W = 2.0  # width of arena
-H = 2.0  # height of arena
+H = 3.0  # height of arena
 
 robot_timestep = 0.1  # 1/robot_timestep equals update frequency of robot
 simulation_timestep = 0.01  # timestep in kinematics sim (probably don't touch)
@@ -115,7 +116,11 @@ for cnt in range(5000):
 
     lidar_points = get_lidar(50)
 
+    visualizer.clear()
+    visualizer.visualize_world(world, H, W)
     visualizer.visualize_lidar(x, y, q, lidar_points)
+    visualizer.visualize_safe_zone((-1, -1), (0.1, 0.1))
+    visualizer.show()
 
     left_mult, right_mult = sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
     # print(left_mult, right_mult, sensor3, q * 180 / math.pi)

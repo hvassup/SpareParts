@@ -17,4 +17,9 @@ class MatPlotVisualizer(Visualizer):
         for x, y in points:
             plt.scatter(x + robotX, y + robotY)
 
+    def show(self):
         plt.show()
+    
+    def clear(self):
+        pass
+
