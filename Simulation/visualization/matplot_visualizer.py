@@ -7,7 +7,7 @@ from simulation.visualization.visualizer import Visualizer
 
 
 class MatPlotVisualizer(Visualizer):
-    def visualize_lidar(self, robotX, robotY, readings):
+    def visualize_lidar(self, robotX, robotY, robotDirection, readings):
         """
         Plot the points where the lidar hits in mat plot lib
         """

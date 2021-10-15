@@ -115,10 +115,10 @@ for cnt in range(5000):
 
     lidar_points = get_lidar(50)
 
-    visualizer.visualize_lidar(x, y, lidar_points)
+    visualizer.visualize_lidar(x, y, q, lidar_points)
 
     left_mult, right_mult = sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
-    print(left_mult, right_mult, sensor3, q * 180 / math.pi)
+    # print(left_mult, right_mult, sensor3, q * 180 / math.pi)
     if cnt % 1000 == 0:
         left_wheel_velocity, right_wheel_velocity = (random(), random())
 
