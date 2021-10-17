@@ -1,3 +1,5 @@
+import math
+
 def sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5):
     sensor1 /= 5020
     sensor2 /= 5020
@@ -8,3 +10,11 @@ def sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
     left_mult = 1 - (sensor4 + sensor5) + sensor3 / 10
     right_mult = 1 - (sensor1 + sensor2) - sensor3 / 10
     return left_mult, right_mult
+
+# Convert to radians
+def deg_to_rad(deg):
+    return deg / 180 * math.pi
+
+# Convert to degrees
+def rad_to_deg(rad):
+    return rad * 180 / math.pi
