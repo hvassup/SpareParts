@@ -24,5 +24,5 @@ class Visualizer:
     def visualize_safe_zone(self, pos, size):
         raise Exception("Not yet implemented!")
 
-    def visualize_danger_spots(self, pos, size):
+    def visualize_danger_spots(self, spots):
         raise Exception("Not yet implemented!")
