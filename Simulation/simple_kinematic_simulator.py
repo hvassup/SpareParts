@@ -9,13 +9,13 @@ from simulation import visualization
 from simulation.visualization.pygame_visualizer import PyGameVisualizer
 
 from shared.util import sensor_readings_to_motor_speeds
-
+import shared.map
 # Constants
 R = 0.043  # radius of wheels in meters
 L = 0.092  # distance between wheels in meters
 
-W = 2.0  # width of arena
-H = 3.0  # height of arena
+W = 20.0  # width of arena
+H = 20.0  # height of arena
 
 robot_timestep = 0.1  # 1/robot_timestep equals update frequency of robot
 simulation_timestep = 0.01  # timestep in kinematics sim (probably don't touch)
@@ -25,12 +25,12 @@ world = LinearRing([(W / 2, H / 2), (-W / 2, H / 2), (-W / 2, -H / 2), (W / 2, -
 
 # Variables
 
-x = 0.8  # robot position in meters - x direction - positive to the right
+x = 8.0  # robot position in meters - x direction - positive to the right
 y = 0.0  # robot position in meters - y direction - positive up
 q = 0.0  # robot heading with respect to x-axis in radians
 
-left_wheel_velocity = 1  # robot left wheel velocity in radians/s
-right_wheel_velocity = 1  # robot right wheel velocity in radians/s
+left_wheel_velocity = 10  # robot left wheel velocity in radians/s
+right_wheel_velocity = 10  # robot right wheel velocity in radians/s
 
 
 # Kinematic model
@@ -80,7 +80,7 @@ def get_sensor_distance(angle):
     """
     angle = angle / 180 * math.pi  # Convert to radians
     # simple single-ray sensor
-    scalar = 10
+    scalar = W + H
     ray = LineString([(x, y), (x + cos(q + angle) * scalar, (y + sin(q + angle) * scalar))])
     # a line from robot to a point outside arena in direction of q
     s = world.intersection(ray)
@@ -98,12 +98,22 @@ def get_lidar(resolution=360):
     """
     return [get_sensor_distance(360 / resolution * i) for i in range(0, resolution)]
 
+def generate_random_danger_spots():
+    size = (0.1, 0.1)
+    spots = []
+    for i in range(0, 10):
+        pos = (1 - random() * W, 1 - random() * H)
+        spots.append((pos, size))
+    return spots
+        
+spots = generate_random_danger_spots()
 
 visualizer = PyGameVisualizer()
 # visualizer = MatPlotVisualizer()
 
 file = open("trajectory.dat", "w")
 turn_counter = 0
+
 # Simulation loop
 for cnt in range(5000):
     # simple controller - change direction of wheels every 10 seconds (100*robot_timestep) unless close to wall then
@@ -114,12 +124,13 @@ for cnt in range(5000):
     sensor4 = distance_to_sensor_reading(get_sensor_distance(-15))
     sensor5 = distance_to_sensor_reading(get_sensor_distance(-30))
 
-    lidar_points = get_lidar(50)
+    lidar_reading = get_lidar(50)
 
     visualizer.clear()
-    visualizer.visualize_world(world, H, W)
-    visualizer.visualize_lidar(x, y, q, lidar_points)
-    visualizer.visualize_safe_zone((-1, -1), (0.1, 0.1))
+    visualizer.visualize_world(shared.map.map, H, W)
+    visualizer.visualize_lidar(x, y, q, lidar_reading)
+    visualizer.visualize_safe_zone((-1,q -1), (0.1, 0.1))
+    visualizer.visualize_danger_spots(spots)
     visualizer.show()
 
     left_mult, right_mult = sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
@@ -130,7 +141,7 @@ for cnt in range(5000):
     if left_wheel_velocity != 1 or right_wheel_velocity != 1:
         turn_counter += 1
         if turn_counter % 100 == 0:
-            left_wheel_velocity, right_wheel_velocity = (1, 1)
+            left_wheel_velocity, right_wheel_velocity = (10, 10)
 
     # step simulation
     simulationstep(left_wheel_velocity * left_mult, right_wheel_velocity * right_mult)

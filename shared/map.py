@@ -1,12 +1,12 @@
 import numpy as np
-from BFS import BFS
+from shared.BFS import BFS
 
 # Width and Height of map in CM
 MAP_WIDTH = 100
 MAP_HEIGHT = 200
 
 # Resolution: How many cm per grid
-MAP_RESOLUTION = 1
+MAP_RESOLUTION = 5
 
 # Create map of zeros
 map = np.zeros((MAP_WIDTH // MAP_RESOLUTION, MAP_HEIGHT // MAP_RESOLUTION))
