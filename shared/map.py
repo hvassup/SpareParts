@@ -9,7 +9,7 @@ MAP_HEIGHT = 200
 MAP_RESOLUTION = 5
 
 # Create map of zeros
-map = np.zeros((MAP_WIDTH // MAP_RESOLUTION, MAP_HEIGHT // MAP_RESOLUTION))
+map = np.zeros((MAP_WIDTH // MAP_RESOLUTION, MAP_HEIGHT // MAP_RESOLUTION), dtype=bool)
 
 # Mark coordinate on map as dangerous (mark as a 1)
 def mark_as_danger(x, y):
