@@ -10,8 +10,17 @@ from time import sleep
 import dbus
 import dbus.mainloop.glib
 from threading import Thread
+from statistics import mean
+from picamera import PiCamera
+import time
+import numpy as np
+import cv2
+import apriltag
+import time
 
-
+# initialize camera & time intervals for image capture
+start_time = time.time()
+camera = PiCamera()
 
 class Thymio:
     def __init__(self):
@@ -38,17 +47,73 @@ class Thymio:
 
     # method for sensing
     # smoothing implemented for both the ground sensors and horizontal sensors
+
     def sens(self):
 
-        front_sensor_0 = [0, 0, 0, 0, 0]
-        front_sensor_1 = [0, 0, 0, 0, 0]
-        front_sensor_2 = [0, 0, 0, 0, 0]
-        front_sensor_3 = [0, 0, 0, 0, 0]
-        front_sensor_4 = [0, 0, 0, 0, 0]
-        ground_sensor_0 = [0, 0, 0, 0, 0]
-        ground_sensor_1 = [0, 0, 0, 0, 0]
+        def takePicture():
+            # print("Taking picture!")
+            camera.start_preview()
+            # time.sleep(5)
+            # we capture to openCV compatible format
+            # you might want to increase resolution
+            camera.resolution = (640, 480)
+            camera.framerate = 24
+            # time.sleep(2)
+
+            image = np.empty((480, 640, 3), dtype=np.uint8)
+            camera.capture(image, 'bgr')
+            flippedImage = cv2.flip(image, -1)
+            gray = cv2.cvtColor(flippedImage, cv2.COLOR_BGR2GRAY)
+            camera.stop_preview()
+            # print("Detecting AprilTags...")
+            options = apriltag.DetectorOptions(families="tag36h11")
+            detector = apriltag.Detector(options)
+            results = detector.detect(gray)
+            # print("{} total AprilTags detected".format(len(results)))
+            if results == []:
+                return (0)
+            else:
+                return (results[0][1])
+
+        """
+        def checkTag():
+            img = cv2.imread('example.png', 0)
+            # print("Detecting AprilTags...")
+            options = apriltag.DetectorOptions(families="tag36h11")
+            detector = apriltag.Detector(options)
+            results = detector.detect(img)
+            # print("{} total AprilTags detected".format(len(results)))
+            if results == []:
+                return (0)
+            else:
+                return (results[0][1])
+        """
+
+        front_sensor_0 = [500, 500, 500, 500, 500]
+        front_sensor_1 = [500, 500, 500, 500, 500]
+        front_sensor_2 = [500, 500, 500, 500, 500]
+        front_sensor_3 = [500, 500, 500, 500, 500]
+        front_sensor_4 = [500, 500, 500, 500, 500]
+        ground_sensor_0 = [500, 500, 500, 500, 500]
+        ground_sensor_1 = [500, 500, 500, 500, 500]
 
         while True:
+            tag = 0
+            rounded = round(time.time() - start_time, 2)
+            if rounded % 1 == 0:
+                tag = takePicture()
+
+            if tag != 0:
+                print("""
+                FOUND!
+                FOUND!
+                FOUND!
+                FOUND!
+                FOUND!
+                FOUND!
+                FOUND!
+                """)
+
             prox_horizontal = self.aseba.GetVariable("thymio-II", "prox.horizontal")
             prox_ground = self.aseba.GetVariable("thymio-II", "prox.ground.reflected")
 
