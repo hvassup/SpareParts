@@ -36,15 +36,49 @@ class Thymio:
         return sensor_readings_to_motor_speeds(prox_horizontal[0], prox_horizontal[1], prox_horizontal[2],
                                                prox_horizontal[3], prox_horizontal[4])
 
+    # method for sensing
+    # smoothing implemented for both the ground sensors and horizontal sensors
     def sens(self):
+
+        front_sensor_0 = [0, 0, 0, 0, 0]
+        front_sensor_1 = [0, 0, 0, 0, 0]
+        front_sensor_2 = [0, 0, 0, 0, 0]
+        front_sensor_3 = [0, 0, 0, 0, 0]
+        front_sensor_4 = [0, 0, 0, 0, 0]
+        ground_sensor_0 = [0, 0, 0, 0, 0]
+        ground_sensor_1 = [0, 0, 0, 0, 0]
+
         while True:
             prox_horizontal = self.aseba.GetVariable("thymio-II", "prox.horizontal")
-            print("Sensing:")
-            print(prox_horizontal[0])
-            print(prox_horizontal[1])
-            print(prox_horizontal[2])
-            print(prox_horizontal[3])
-            print(prox_horizontal[4])
+            prox_ground = self.aseba.GetVariable("thymio-II", "prox.ground.reflected")
+
+            front_sensor_0.insert(0, prox_horizontal[0])
+            del front_sensor_0[5]
+            front_sensor_1.insert(0, prox_horizontal[1])
+            del front_sensor_1[5]
+            front_sensor_2.insert(0, prox_horizontal[2])
+            del front_sensor_2[5]
+            front_sensor_3.insert(0, prox_horizontal[3])
+            del front_sensor_3[5]
+            front_sensor_4.insert(0, prox_horizontal[4])
+            del front_sensor_4[5]
+            ground_sensor_0.insert(0, prox_ground[0])
+            del ground_sensor_0[5]
+            ground_sensor_1.insert(0, prox_ground[1])
+            del ground_sensor_1[5]
+
+            smoothed_front_0 = mean(front_sensor_0)
+            smoothed_front_1 = mean(front_sensor_1)
+            smoothed_front_2 = mean(front_sensor_2)
+            smoothed_front_3 = mean(front_sensor_3)
+            smoothed_front_4 = mean(front_sensor_4)
+            smoothed_ground_0 = mean(ground_sensor_0)
+            smoothed_ground_1 = mean(ground_sensor_1)
+
+            if smoothed_ground_0 > 500 and smoothed_ground_1 > 500:
+                print("White")
+            else:
+                print("Black")
 
     ############## Bus and aseba setup ######################################
 
