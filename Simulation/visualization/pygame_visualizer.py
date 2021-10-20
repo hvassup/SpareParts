@@ -4,7 +4,7 @@ import pygame
 from simulation.visualization.visualizer import Visualizer
 
 offset = 150
-scale = 10
+scale = 100
 def scale_point(x, y):
     return offset + (x) * scale, offset + (y) * scale
 
@@ -34,6 +34,8 @@ class PyGameVisualizer(Visualizer):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            elif event.type == pygame.KEYDOWN and event.key == 32: # Press space
+                print('Hello')
         pygame.display.update()
     
     def draw_rect(self, color, pos, size):
@@ -47,13 +49,8 @@ class PyGameVisualizer(Visualizer):
     def visualize_safe_zone(self, pos, size):
         self.draw_rect((0, 255, 0), pos, size)
     
-    def draw_line_to_point(self, x, y, robotX, robotY):
-        pygame.draw.line(self.surface, (255, 0, 255), scale_point(robotX, robotY), scale_point(x + robotX, y + robotY))
-    
-    def get_point_at_rotation(self, angle, points, robotX, robotY):
-        point_idx = round(angle / 360 * len(points)) % len(points)
-        point = points[point_idx]
-        self.draw_line_to_point(*point, robotX, robotY)
+    def draw_line_to_point(self, x1, y1, x2, y2):
+        pygame.draw.line(self.surface, (255, 0, 255), scale_point(x1, y1), scale_point(x2, y2))
     
     def draw_points(self, points, col, originX=0, originY=0, size=2):
         for x, y in points:
