@@ -26,3 +26,6 @@ class Visualizer:
 
     def visualize_danger_spots(self, spots):
         raise Exception("Not yet implemented!")
+    
+    def draw_text(self, msg, pos):
+        raise Exception("Not yet implemented!")
