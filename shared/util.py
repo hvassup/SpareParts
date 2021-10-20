@@ -15,14 +15,6 @@ def sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
     right_mult = 1 - (sensor1 + sensor2) - sensor3 / 10
     return left_mult, right_mult
 
-# Convert to radians
-def deg_to_rad(deg):
-    return deg / 180 * math.pi
-
-# Convert to degrees
-def rad_to_deg(rad):
-    return rad * 180 / math.pi
-
 # Get distance between two points
 def euclidean_distance(x1, y1, x2, y2):
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
@@ -49,7 +41,7 @@ def get_lidar_points(readings, robot_dir):
     points = []
     for _i, reading in enumerate(readings):
         i = 360 / resolution * _i
-        angle = deg_to_rad(i)
+        angle = math.radians(i)
         x = math.cos(robot_dir + angle) * reading
         y = math.sin(robot_dir + angle) * reading
         points.append((float(x), float(y)))

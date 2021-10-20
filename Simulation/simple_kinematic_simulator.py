@@ -7,12 +7,11 @@ import numpy as np
 from numpy import sin, cos, sqrt
 from shapely.geometry import LinearRing, LineString, Point
 from shared.route_planner import turn_to_point
-from simulation import visualization
+
 from simulation.sensor_sim import distance_to_sensor_reading
 from simulation.visualization.pygame_visualizer import PyGameVisualizer
 
-from shared.util import calc_rectangle, euclidean_distance, find_robot_pos, get_lidar_points, rad_to_deg, rotate_point, round_point, sensor_readings_to_motor_speeds
-import shared.map
+from shared.util import calc_rectangle, euclidean_distance, get_lidar_points, round_point, sensor_readings_to_motor_speeds
 
 def get_sensor_distance(angle):
     """
@@ -137,7 +136,7 @@ for cnt in range(1, 5000):
     visualizer.draw_point(*target_pos, (0, 255, 255))
     visualizer.draw_line_to_point(*target_pos, x, y)
     
-    visualizer.draw_text(f'Actual robot angle:        {rad_to_deg(q)}', (300, 20))
+    visualizer.draw_text(f'Actual robot angle:        {math.degrees(q)}', (300, 20))
     visualizer.draw_text(f'Actual robot position:    {round_point(x, y)}', (300, 30))
     visualizer.draw_text(f'Estimated robot position: {round_point(-cx, -cy)}', (300, 40))
     visualizer.draw_text(f'Distance to goal:        {distance_to_goal}', (300, 50))
