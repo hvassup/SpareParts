@@ -3,8 +3,8 @@ import pygame
 
 from simulation.visualization.visualizer import Visualizer
 
-offset = 150
-scale = 100
+offset = 300
+scale = 200
 def scale_point(x, y):
     return offset + (x) * scale, offset + (y) * scale
 
@@ -16,7 +16,7 @@ class PyGameVisualizer(Visualizer):
         self.a = 0
         pygame.init()
         pygame.display.init()
-        self.surface = pygame.display.set_mode((600, 300))
+        self.surface = pygame.display.set_mode((900, 600))
 
     def draw_text(self, msg, point):
         font1 = pygame.font.SysFont('chalkduster.ttf', 16)

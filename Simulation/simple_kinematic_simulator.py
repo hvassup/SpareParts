@@ -11,7 +11,7 @@ from shared.route_planner import turn_to_point
 from simulation.sensor_sim import distance_to_sensor_reading
 from simulation.visualization.pygame_visualizer import PyGameVisualizer
 
-from shared.util import calc_rectangle, euclidean_distance, get_lidar_points, round_point, sensor_readings_to_motor_speeds
+from shared.util import calc_rectangle, clamp, euclidean_distance, get_lidar_points, round_point, sensor_readings_to_motor_speeds
 
 def get_sensor_distance(angle):
     """
@@ -65,8 +65,8 @@ x = 0.0  # robot position in meters - x direction - positive to the right
 y = 0.0  # robot position in meters - y direction - positive up
 q = math.pi / 2  # robot heading with respect to x-axis in radians
 
-left_wheel_velocity = 5  # robot left wheel velocity in radians/s
-right_wheel_velocity = 5  # robot right wheel velocity in radians/s
+left_wheel_velocity = 2   # robot left wheel velocity in radians/s
+right_wheel_velocity = 2  # robot right wheel velocity in radians/s
 
 
 # Kinematic model
@@ -94,10 +94,20 @@ file = open("trajectory.dat", "w")
 turn_counter = 0
 
 def generate_random_path():
-    path = []
+    path = [(-0.8, -0.8)]
     for i in range(0, 100):
-        _x = (random() * W - W / 2) * 0.8
-        _y = (random() * H - H / 2) * 0.8
+        prev_x, prev_y = path[i]
+        
+        # Completely random path
+        # _x = (random() * W - W / 2) * 0.8
+        # _y = (random() * H - H / 2) * 0.8
+        
+        # Random, connected path
+        spread = 0.1
+        mul = 0.45
+        _x = clamp(prev_x + random() * spread, -W * mul, W * mul)
+        _y = clamp(prev_y + random() * spread, -H * mul, H * mul)
+
         path.append((_x, _y))
     return path
 
@@ -130,7 +140,7 @@ for cnt in range(1, 5000):
     
     distance_to_goal = euclidean_distance(*target_pos, x, y)
     
-    if distance_to_goal < 0.05:
+    if distance_to_goal < 0.02:
         path_index += 1
 
     visualizer.draw_point(*target_pos, (0, 255, 255))
@@ -150,13 +160,13 @@ for cnt in range(1, 5000):
     
     # print(round(path_left_mult, 3), round(path_right_mult, 3))
     
-    if cnt % 1000 == 0:
-        left_wheel_velocity, right_wheel_velocity = (random(), random())
+    # if cnt % 1000 == 0:
+    #     left_wheel_velocity, right_wheel_velocity = (random(), random())
 
-    if left_wheel_velocity != 1 or right_wheel_velocity != 1:
-        turn_counter += 1
-        if turn_counter % 100 == 0:
-            left_wheel_velocity, right_wheel_velocity = (10, 10)
+    # if left_wheel_velocity != 1 or right_wheel_velocity != 1:
+    #     turn_counter += 1
+    #     if turn_counter % 100 == 0:
+    #         left_wheel_velocity, right_wheel_velocity = (10, 10)
 
     # step simulation
     simulationstep(left_wheel_velocity * left_mult, right_wheel_velocity * right_mult)
