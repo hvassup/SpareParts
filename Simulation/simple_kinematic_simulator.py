@@ -1,17 +1,15 @@
 # A prototype simulation of a differential-drive robot with one sensor
 import math
 from random import random
-from sys import path
-import cv2
-import numpy as np
+
 from numpy import sin, cos, sqrt
 from shapely.geometry import LinearRing, LineString, Point
 from shared.route_planner import turn_to_point
 
 from simulation.sensor_sim import distance_to_sensor_reading
-from simulation.visualization.pygame_visualizer import PyGameVisualizer
+from simulation.visualization.pygame_visualizer import PyGameVisualizer, scale_point
 
-from shared.util import calc_rectangle, clamp, euclidean_distance, get_lidar_points, round_point, sensor_readings_to_motor_speeds
+from shared.util import calc_rectangle, clamp, euclidean_distance, get_lidar_points, rotate_point, round_point, sensor_readings_to_motor_speeds
 
 def get_sensor_distance(angle):
     """
@@ -50,8 +48,8 @@ def generate_random_danger_spots():
 R = 0.043  # radius of wheels in meters
 L = 0.092  # distance between wheels in meters
 
-W = 2.0  # width of arena
-H = 2.0  # height of arena
+W = 192.0  # width of arena
+H = 113.0  # height of arena
 
 robot_timestep = 0.1  # 1/robot_timestep equals update frequency of robot
 simulation_timestep = 0.01  # timestep in kinematics sim (probably don't touch)
@@ -61,12 +59,12 @@ world = LinearRing([(W / 2, H / 2), (-W / 2, H / 2), (-W / 2, -H / 2), (W / 2, -
 
 # Variables
 
-x = 0.0  # robot position in meters - x direction - positive to the right
-y = 0.0  # robot position in meters - y direction - positive up
+x = -W/2 + 1.0  # robot position in meters - x direction - positive to the right
+y = -H/2 + 1.0  # robot position in meters - y direction - positive up
 q = math.pi / 2  # robot heading with respect to x-axis in radians
 
-left_wheel_velocity = 2   # robot left wheel velocity in radians/s
-right_wheel_velocity = 2  # robot right wheel velocity in radians/s
+left_wheel_velocity = 20   # robot left wheel velocity in radians/s
+right_wheel_velocity = 20  # robot right wheel velocity in radians/s
 
 
 # Kinematic model
@@ -94,16 +92,12 @@ file = open("trajectory.dat", "w")
 turn_counter = 0
 
 def generate_random_path():
-    path = [(-0.8, -0.8)]
+    path = [(x, y)]
     for i in range(0, 100):
         prev_x, prev_y = path[i]
         
-        # Completely random path
-        # _x = (random() * W - W / 2) * 0.8
-        # _y = (random() * H - H / 2) * 0.8
-        
         # Random, connected path
-        spread = 0.1
+        spread = 5
         mul = 0.45
         _x = clamp(prev_x + random() * spread, -W * mul, W * mul)
         _y = clamp(prev_y + random() * spread, -H * mul, H * mul)
@@ -113,6 +107,14 @@ def generate_random_path():
 
 path_to_explore = generate_random_path()
 path_index = 0
+
+april_tags = [(W / 2, 0), (W / 2, H / 3), 
+(W * 2 / 5, H / 2), (W / 5, H / 2), (0, H / 2), (-W / 5, H / 2), (-W * 2 / 5, H / 2),
+(-W / 2, H / 3), (-W / 2, 0), (-W / 2, -H / 3),
+(-W * 2 / 5, -H / 2), (-W / 5, -H / 2), (0, -H / 2), (W / 5, -H / 2), (W * 2 / 5, -H / 2), 
+(W / 2, -H / 3)]
+
+camera_range = 50
 
 # Simulation loop
 for cnt in range(1, 5000):
@@ -124,28 +126,44 @@ for cnt in range(1, 5000):
     sensor4 = distance_to_sensor_reading(get_sensor_distance(-15))
     sensor5 = distance_to_sensor_reading(get_sensor_distance(-30))
 
-    lidar_reading = get_lidar(360)
+    # Init visualization
+    visualizer.clear()
+
+    # Draw lidar
+    lidar_reading = get_lidar(50)
     lidar_points = get_lidar_points(lidar_reading, q)
     center, width_height, _angle = calc_rectangle(lidar_points)
     cx, cy = center
-
-    visualizer.clear()
     visualizer.draw_points(lidar_points, (255, 255, 255), x, y)
-    visualizer.draw_points(path_to_explore, (255, 255, 255), 0, 0)
+
+    # Draw camera field of view
+    cp1x, cp1y = rotate_point(0, camera_range, q - math.radians(90 + 25))
+    cp2x, cp2y = rotate_point(0, camera_range, q - math.radians(90 - 25))
+    visualizer.draw_line_to_point(x, y, x + cp1x, y + cp1y, (50, 0, 255))
+    visualizer.draw_line_to_point(x, y, x + cp2x, y + cp2y, (50, 0, 255))
+    
+    # Draw april tags
+    for i, pos in enumerate(april_tags):
+        visualizer.draw_point(*pos, (255, 255, 0), 3)
+        visualizer.draw_text(str(i), scale_point(*pos))
     
     # visualizer.draw_point(-cx, -cy, (0, 0, 255))
+    # Draw robot
     visualizer.draw_point(x, y, (0, 255, 0))
 
+    # Path finding
     target_pos = path_to_explore[path_index]
     
     distance_to_goal = euclidean_distance(*target_pos, x, y)
     
-    if distance_to_goal < 0.02:
+    if distance_to_goal < 1:
         path_index += 1
 
+    visualizer.draw_points(path_to_explore, (255, 255, 255), 0, 0)
     visualizer.draw_point(*target_pos, (0, 255, 255))
-    visualizer.draw_line_to_point(*target_pos, x, y)
+    visualizer.draw_line_to_point(*target_pos, x, y, (255, 0, 255))
     
+    # Draw info
     visualizer.draw_text(f'Actual robot angle:        {math.degrees(q)}', (300, 20))
     visualizer.draw_text(f'Actual robot position:    {round_point(x, y)}', (300, 30))
     visualizer.draw_text(f'Estimated robot position: {round_point(-cx, -cy)}', (300, 40))

@@ -3,8 +3,8 @@ import pygame
 
 from simulation.visualization.visualizer import Visualizer
 
-offset = 300
-scale = 200
+offset = 400
+scale = 4
 def scale_point(x, y):
     return offset + (x) * scale, offset + (y) * scale
 
@@ -16,7 +16,7 @@ class PyGameVisualizer(Visualizer):
         self.a = 0
         pygame.init()
         pygame.display.init()
-        self.surface = pygame.display.set_mode((900, 600))
+        self.surface = pygame.display.set_mode((900, 700))
 
     def draw_text(self, msg, point):
         font1 = pygame.font.SysFont('chalkduster.ttf', 16)
@@ -49,8 +49,8 @@ class PyGameVisualizer(Visualizer):
     def visualize_safe_zone(self, pos, size):
         self.draw_rect((0, 255, 0), pos, size)
     
-    def draw_line_to_point(self, x1, y1, x2, y2):
-        pygame.draw.line(self.surface, (255, 0, 255), scale_point(x1, y1), scale_point(x2, y2))
+    def draw_line_to_point(self, x1, y1, x2, y2, col):
+        pygame.draw.line(self.surface, col, scale_point(x1, y1), scale_point(x2, y2))
     
     def draw_points(self, points, col, originX=0, originY=0, size=2):
         for x, y in points:

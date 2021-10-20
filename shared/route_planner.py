@@ -1,7 +1,4 @@
 import math
-from re import A
-
-from numpy import diff
 
 from shared.util import clamp
 test_route = []
