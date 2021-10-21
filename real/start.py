@@ -42,8 +42,7 @@ class Thymio:
 
     def get_motor_multipliers(self):
         prox_horizontal = self.aseba.GetVariable("thymio-II", "prox.horizontal")
-        return sensor_readings_to_motor_speeds(prox_horizontal[0], prox_horizontal[1], prox_horizontal[2],
-                                               prox_horizontal[3], prox_horizontal[4])
+        return sensor_readings_to_motor_speeds(prox_horizontal)
 
     # method for sensing
     # smoothing implemented for both the ground sensors and horizontal sensors

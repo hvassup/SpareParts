@@ -12,7 +12,7 @@ def distance_to_sensor_reading(distance):
     """
     distance -= 0.05  # Simulate, that the sensors are not perfectly centered on the robot
 
-    max_dist = 0.1
+    max_dist = 0.2
     max_reading = 5020
 
     if distance > max_dist:

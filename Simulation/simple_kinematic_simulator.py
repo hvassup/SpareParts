@@ -5,6 +5,7 @@ from random import random
 from numpy import sin, cos, sqrt
 from shapely.geometry import LinearRing, LineString, Point
 from shared.map import Map
+from shared.movement import get_wheel_speeds
 from shared.route_planner import angle_to_point, turn_to_point
 from simulation.bottom_sensor import is_sensor_in_danger_spot
 
@@ -63,10 +64,10 @@ world = LinearRing([(W / 2, H / 2), (-W / 2, H / 2), (-W / 2, -H / 2), (W / 2, -
 
 x = -W/2 + 1.0  # robot position in meters - x direction - positive to the right
 y = -H/2 + 1.0  # robot position in meters - y direction - positive up
-q = math.pi / 2  # robot heading with respect to x-axis in radians
+q = math.pi / 2 + 0.1  # robot heading with respect to x-axis in radians
 
-left_wheel_velocity = 20   # robot left wheel velocity in radians/s
-right_wheel_velocity = 20  # robot right wheel velocity in radians/s
+left_wheel_velocity = 40   # robot left wheel velocity in radians/s
+right_wheel_velocity = 40  # robot right wheel velocity in radians/s
 
 
 # Kinematic model
@@ -107,10 +108,13 @@ def generate_random_path():
         path.append((_x, _y))
     return path
 
-path_to_explore = generate_random_path()
+buddy_pos = (W / 2 - 5, 0)
+
+# path_to_explore = generate_random_path()
+path_to_explore = [buddy_pos]
 path_index = 0
 
-map = Map(W, H, 1)
+world_map = Map(W, H, 1)
 
 april_tags = [(W / 2, 0), (W / 2, H / 3), 
 (W * 2 / 5, H / 2), (W / 5, H / 2), (0, H / 2), (-W / 5, H / 2), (-W * 2 / 5, H / 2),
@@ -124,22 +128,21 @@ camera_fov = 25
 bottom_sensor_offset = 3
 bottom_sensor_angle = 25
 
+sensor_angles = [30, 15, 0, -15, 30]
+
+
 # Simulation loop
 for cnt in range(1, 5000):
     # simple controller - change direction of wheels every 10 seconds (100*robot_timestep) unless close to wall then
     # turn on spot
-    sensor1 = distance_to_sensor_reading(get_sensor_distance(30))
-    sensor2 = distance_to_sensor_reading(get_sensor_distance(15))
-    sensor3 = distance_to_sensor_reading(get_sensor_distance(0))
-    sensor4 = distance_to_sensor_reading(get_sensor_distance(-15))
-    sensor5 = distance_to_sensor_reading(get_sensor_distance(-30))
-
+    sensors = list(map(lambda x: distance_to_sensor_reading(get_sensor_distance(x)), sensor_angles))
+    
     # Init visualization
     visualizer.clear()
 
     # Draw map
-    for safe_spot in map.safe_spots:
-        res = map.RESOLUTION
+    for safe_spot in world_map.safe_spots:
+        res = world_map.RESOLUTION
         visualizer.draw_rectangle(safe_spot, (res, res), (87, 184, 255))
     # for _y in range(0, map.map.shape[1]):
     #     for _x in range(0, map.map.shape[0]):
@@ -170,6 +173,11 @@ for cnt in range(1, 5000):
             visualizer.draw_line(x, y, *pos, (255, 0 ,0))
             # print(f'I can see {i}')
 
+    # Draw buddy
+    visualizer.draw_point(*buddy_pos, (255, 192, 203), 5)
+    if euclidean_distance(*buddy_pos, x, y) < camera_range and abs(math.degrees(angle_to_point(x, y, q, *buddy_pos))) < camera_fov:
+        break
+
     # Draw danger spots
     visualizer.draw_rectangles(spots, (120, 0, 0))
     
@@ -197,17 +205,17 @@ for cnt in range(1, 5000):
     
     if is_sensor_in_danger_spot(*sensor1_pos, spots):
         visualizer.draw_point(*sensor1_pos, (255, 0, 0))
-        map.mark_as_danger(*sensor1_pos)
+        world_map.mark_as_danger(*sensor1_pos)
     else:
         visualizer.draw_point(*sensor1_pos, (50, 120, 255))
-        map.mark_as_safe(*sensor1_pos)
+        world_map.mark_as_safe(*sensor1_pos)
         
     if is_sensor_in_danger_spot(*sensor2_pos, spots):
         visualizer.draw_point(*sensor2_pos, (255, 0, 0))
-        map.mark_as_danger(*sensor2_pos)
+        world_map.mark_as_danger(*sensor2_pos)
     else:
         visualizer.draw_point(*sensor2_pos, (50, 120, 255))
-        map.mark_as_safe(*sensor2_pos)
+        world_map.mark_as_safe(*sensor2_pos)
     
     # Draw info
     visualizer.draw_text(f'Actual robot angle:        {math.degrees(q)}', (300, 20))
@@ -217,20 +225,8 @@ for cnt in range(1, 5000):
 
     visualizer.show()
 
-    sensor_left_mult, sensor_right_mult = sensor_readings_to_motor_speeds(sensor1, sensor2, sensor3, sensor4, sensor5)
-    path_left_mult, path_right_mult = turn_to_point(x, y, q, *target_pos)
-    left_mult = sensor_left_mult * path_left_mult
-    right_mult = sensor_right_mult * path_right_mult
     
-    # print(round(path_left_mult, 3), round(path_right_mult, 3))
-    
-    # if cnt % 1000 == 0:
-    #     left_wheel_velocity, right_wheel_velocity = (random(), random())
-
-    # if left_wheel_velocity != 1 or right_wheel_velocity != 1:
-    #     turn_counter += 1
-    #     if turn_counter % 100 == 0:
-    #         left_wheel_velocity, right_wheel_velocity = (10, 10)
+    left_mult, right_mult = get_wheel_speeds(x, y, q, target_pos, sensors)
 
     # step simulation
     simulationstep(left_wheel_velocity * left_mult, right_wheel_velocity * right_mult)

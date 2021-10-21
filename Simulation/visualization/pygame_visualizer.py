@@ -1,8 +1,6 @@
 import sys
 import pygame
 
-from simulation.visualization.visualizer import Visualizer
-
 offset = 400
 scale = 4
 def scale_point(x, y):
@@ -11,7 +9,7 @@ def scale_point(x, y):
 def scale_size(w, h):
     return w * scale, h * scale
 
-class PyGameVisualizer(Visualizer):
+class PyGameVisualizer():
     def __init__(self):
         self.a = 0
         pygame.init()

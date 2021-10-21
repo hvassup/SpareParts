@@ -18,11 +18,11 @@ def turn_to_point(currX, currY, angle, toX, toY):
     # return smooth_movement(angle_diff, angle_margin)
     return turn_and_go(angle_diff, angle_margin)
     
-def turn_and_go(angle_diff, angle_margin):
+def turn_and_go(angle_diff, angle_margin, turn_multiplier=0.5):
     if angle_diff < -angle_margin:
-        return clamp(abs(angle_diff), 0, 1), -clamp(abs(angle_diff), 0, 1)
+        return clamp(abs(angle_diff) * turn_multiplier, 0, 1), -clamp(abs(angle_diff) * turn_multiplier, 0, 1)
     elif angle_diff > angle_margin:
-        return -clamp(abs(angle_diff), 0, 1), clamp(abs(angle_diff), 0, 1)
+        return -clamp(abs(angle_diff) * turn_multiplier, 0, 1), clamp(abs(angle_diff) * turn_multiplier, 0, 1)
     else:
         return 1, 1
 
