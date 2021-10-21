@@ -4,7 +4,7 @@ from random import random
 
 from numpy import sin, cos, sqrt
 from shapely.geometry import LinearRing, LineString, Point
-from shared.route_planner import turn_to_point
+from shared.route_planner import angle_to_point, turn_to_point
 
 from simulation.sensor_sim import distance_to_sensor_reading
 from simulation.visualization.pygame_visualizer import PyGameVisualizer, scale_point
@@ -37,10 +37,10 @@ def get_lidar(resolution=360):
     return [get_sensor_distance(360 / resolution * i) for i in range(0, resolution)]
 
 def generate_random_danger_spots():
-    size = (0.1, 0.1)
+    size = (5, 10)
     spots = []
     for i in range(0, 10):
-        pos = (1 - random() * W, 1 - random() * H)
+        pos = (W / 2 - random() * (W - size[0]*2), H / 2 - random() * (H - size[1]*2))
         spots.append((pos, size))
     return spots
 
@@ -115,6 +115,7 @@ april_tags = [(W / 2, 0), (W / 2, H / 3),
 (W / 2, -H / 3)]
 
 camera_range = 50
+camera_fov = 25
 
 # Simulation loop
 for cnt in range(1, 5000):
@@ -137,8 +138,8 @@ for cnt in range(1, 5000):
     visualizer.draw_points(lidar_points, (255, 255, 255), x, y)
 
     # Draw camera field of view
-    cp1x, cp1y = rotate_point(0, camera_range, q - math.radians(90 + 25))
-    cp2x, cp2y = rotate_point(0, camera_range, q - math.radians(90 - 25))
+    cp1x, cp1y = rotate_point(0, camera_range, q - math.radians(90 + camera_fov))
+    cp2x, cp2y = rotate_point(0, camera_range, q - math.radians(90 - camera_fov))
     visualizer.draw_line_to_point(x, y, x + cp1x, y + cp1y, (50, 0, 255))
     visualizer.draw_line_to_point(x, y, x + cp2x, y + cp2y, (50, 0, 255))
     
@@ -146,10 +147,16 @@ for cnt in range(1, 5000):
     for i, pos in enumerate(april_tags):
         visualizer.draw_point(*pos, (255, 255, 0), 3)
         visualizer.draw_text(str(i), scale_point(*pos))
+        if euclidean_distance(*pos, x, y) < camera_range and abs(math.degrees(angle_to_point(x, y, q, *pos))) < camera_fov:
+            visualizer.draw_line_to_point(x, y, *pos, (255, 0 ,0))
+            # print(f'I can see {i}')
+
+    # Danger spots
+    visualizer.visualize_danger_spots(spots)
     
     # visualizer.draw_point(-cx, -cy, (0, 0, 255))
     # Draw robot
-    visualizer.draw_point(x, y, (0, 255, 0))
+    visualizer.draw_point(x, y, (0, 255, 0), 11)
 
     # Path finding
     target_pos = path_to_explore[path_index]
