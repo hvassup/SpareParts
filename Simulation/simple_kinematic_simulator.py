@@ -140,19 +140,19 @@ for cnt in range(1, 5000):
     # Draw camera field of view
     cp1x, cp1y = rotate_point(0, camera_range, q - math.radians(90 + camera_fov))
     cp2x, cp2y = rotate_point(0, camera_range, q - math.radians(90 - camera_fov))
-    visualizer.draw_line_to_point(x, y, x + cp1x, y + cp1y, (50, 0, 255))
-    visualizer.draw_line_to_point(x, y, x + cp2x, y + cp2y, (50, 0, 255))
+    visualizer.draw_line(x, y, x + cp1x, y + cp1y, (50, 0, 255))
+    visualizer.draw_line(x, y, x + cp2x, y + cp2y, (50, 0, 255))
     
     # Draw april tags
     for i, pos in enumerate(april_tags):
         visualizer.draw_point(*pos, (255, 255, 0), 3)
         visualizer.draw_text(str(i), scale_point(*pos))
         if euclidean_distance(*pos, x, y) < camera_range and abs(math.degrees(angle_to_point(x, y, q, *pos))) < camera_fov:
-            visualizer.draw_line_to_point(x, y, *pos, (255, 0 ,0))
+            visualizer.draw_line(x, y, *pos, (255, 0 ,0))
             # print(f'I can see {i}')
 
     # Danger spots
-    visualizer.visualize_danger_spots(spots)
+    visualizer.draw_rectangles(spots)
     
     # visualizer.draw_point(-cx, -cy, (0, 0, 255))
     # Draw robot
@@ -168,7 +168,7 @@ for cnt in range(1, 5000):
 
     visualizer.draw_points(path_to_explore, (255, 255, 255), 0, 0)
     visualizer.draw_point(*target_pos, (0, 255, 255))
-    visualizer.draw_line_to_point(*target_pos, x, y, (255, 0, 255))
+    visualizer.draw_line(*target_pos, x, y, (255, 0, 255))
     
     # Draw info
     visualizer.draw_text(f'Actual robot angle:        {math.degrees(q)}', (300, 20))
