@@ -42,13 +42,13 @@ class PyGameVisualizer(Visualizer):
         for x, y in points:
             self.draw_point(originX + x, originY + y, col, size)
     
-    def draw_rectangle(self, color, pos, size):
+    def draw_rectangle(self, pos, size, color):
         rect = scale_point(*pos) + scale_size(*size)
         pygame.draw.rect(self.surface, color, rect)
     
     def draw_rectangles(self, rectangles, col=(255, 255, 255)):
         for pos, size in rectangles:
-            self.draw_rectangle(col, pos, size)
+            self.draw_rectangle(pos, size, col)
     
     def draw_line(self, x1, y1, x2, y2, col):
         pygame.draw.line(self.surface, col, scale_point(x1, y1), scale_point(x2, y2))

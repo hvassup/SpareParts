@@ -61,3 +61,9 @@ def calc_rectangle(points):
     _points = list(map(lambda p: (p[0] * scalar, p[1] * scalar), points))
     (cx, cy), (w, h), angle = cv2.minAreaRect(np.asarray(_points).astype(np.int))
     return (cx / scalar, cy / scalar), (w / scalar, h/scalar), angle
+
+def is_point_inside_rectangle(px, py, pos, size):
+    rx, ry = pos
+    rw, rh = size
+    if px >= rx and py >= ry and px <= rx + rw and py <= ry + rh:
+        return True

@@ -4,12 +4,14 @@ from random import random
 
 from numpy import sin, cos, sqrt
 from shapely.geometry import LinearRing, LineString, Point
+from shared.map import Map
 from shared.route_planner import angle_to_point, turn_to_point
+from simulation.bottom_sensor import is_sensor_in_danger_spot
 
 from simulation.sensor_sim import distance_to_sensor_reading
 from simulation.visualization.pygame_visualizer import PyGameVisualizer, scale_point
 
-from shared.util import calc_rectangle, clamp, euclidean_distance, get_lidar_points, rotate_point, round_point, sensor_readings_to_motor_speeds
+from shared.util import calc_rectangle, clamp, euclidean_distance, get_lidar_points, is_point_inside_rectangle, rotate_point, round_point, sensor_readings_to_motor_speeds
 
 def get_sensor_distance(angle):
     """
@@ -38,7 +40,7 @@ def get_lidar(resolution=360):
 
 def generate_random_danger_spots():
     size = (5, 10)
-    spots = []
+    spots = [((-W / 2 + 2, -H / 2 + 2), size)]
     for i in range(0, 10):
         pos = (W / 2 - random() * (W - size[0]*2), H / 2 - random() * (H - size[1]*2))
         spots.append((pos, size))
@@ -108,6 +110,8 @@ def generate_random_path():
 path_to_explore = generate_random_path()
 path_index = 0
 
+map = Map(W, H, 1)
+
 april_tags = [(W / 2, 0), (W / 2, H / 3), 
 (W * 2 / 5, H / 2), (W / 5, H / 2), (0, H / 2), (-W / 5, H / 2), (-W * 2 / 5, H / 2),
 (-W / 2, H / 3), (-W / 2, 0), (-W / 2, -H / 3),
@@ -116,6 +120,9 @@ april_tags = [(W / 2, 0), (W / 2, H / 3),
 
 camera_range = 50
 camera_fov = 25
+
+bottom_sensor_offset = 3
+bottom_sensor_angle = 25
 
 # Simulation loop
 for cnt in range(1, 5000):
@@ -130,6 +137,18 @@ for cnt in range(1, 5000):
     # Init visualization
     visualizer.clear()
 
+    # Draw map
+    for safe_spot in map.safe_spots:
+        res = map.RESOLUTION
+        visualizer.draw_rectangle(safe_spot, (res, res), (87, 184, 255))
+    # for _y in range(0, map.map.shape[1]):
+    #     for _x in range(0, map.map.shape[0]):
+    #         pos = (_x * res - map.WIDTH / 2, _y * res - map.HEIGHT / 2)
+    #         if map.is_danger(*pos):
+    #             pass # visualizer.draw_rectangle(pos, (res, res), (254, 28, 28))
+    #         else:
+    #             visualizer.draw_rectangle(pos, (res, res), (87, 184, 255))
+
     # Draw lidar
     lidar_reading = get_lidar(50)
     lidar_points = get_lidar_points(lidar_reading, q)
@@ -141,8 +160,8 @@ for cnt in range(1, 5000):
     cp1x, cp1y = rotate_point(0, camera_range, q - math.radians(90 + camera_fov))
     cp2x, cp2y = rotate_point(0, camera_range, q - math.radians(90 - camera_fov))
     visualizer.draw_line(x, y, x + cp1x, y + cp1y, (50, 0, 255))
-    visualizer.draw_line(x, y, x + cp2x, y + cp2y, (50, 0, 255))
-    
+    visualizer.draw_line(x, y, x + cp2x, y + cp2y, (50, 0, 255))    
+
     # Draw april tags
     for i, pos in enumerate(april_tags):
         visualizer.draw_point(*pos, (255, 255, 0), 3)
@@ -151,8 +170,8 @@ for cnt in range(1, 5000):
             visualizer.draw_line(x, y, *pos, (255, 0 ,0))
             # print(f'I can see {i}')
 
-    # Danger spots
-    visualizer.draw_rectangles(spots)
+    # Draw danger spots
+    visualizer.draw_rectangles(spots, (120, 0, 0))
     
     # visualizer.draw_point(-cx, -cy, (0, 0, 255))
     # Draw robot
@@ -169,6 +188,26 @@ for cnt in range(1, 5000):
     visualizer.draw_points(path_to_explore, (255, 255, 255), 0, 0)
     visualizer.draw_point(*target_pos, (0, 255, 255))
     visualizer.draw_line(*target_pos, x, y, (255, 0, 255))
+
+    # Simulate bottom sensors (They can only see danger zones)
+    bp1x, bp1y = rotate_point(0, bottom_sensor_offset, q - math.radians(90 + bottom_sensor_angle))
+    bp2x, bp2y = rotate_point(0, bottom_sensor_offset, q - math.radians(90 - bottom_sensor_angle))
+    sensor1_pos = (x + bp1x, y + bp1y)
+    sensor2_pos = (x + bp2x, y + bp2y)
+    
+    if is_sensor_in_danger_spot(*sensor1_pos, spots):
+        visualizer.draw_point(*sensor1_pos, (255, 0, 0))
+        map.mark_as_danger(*sensor1_pos)
+    else:
+        visualizer.draw_point(*sensor1_pos, (50, 120, 255))
+        map.mark_as_safe(*sensor1_pos)
+        
+    if is_sensor_in_danger_spot(*sensor2_pos, spots):
+        visualizer.draw_point(*sensor2_pos, (255, 0, 0))
+        map.mark_as_danger(*sensor2_pos)
+    else:
+        visualizer.draw_point(*sensor2_pos, (50, 120, 255))
+        map.mark_as_safe(*sensor2_pos)
     
     # Draw info
     visualizer.draw_text(f'Actual robot angle:        {math.degrees(q)}', (300, 20))
