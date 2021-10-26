@@ -1,6 +1,7 @@
 from math import sqrt, cos, sin, pi
-
 from shapely.geometry.linestring import LineString
+
+from shared.state import W, H, world
 
 def distance_to_sensor_reading(distance):
     """
@@ -33,7 +34,7 @@ def read_april_tag(angle):
     12 is on the middle of the top
     """
 
-def get_sensor_distance(world, W, H, x, y, q, angle):
+def get_sensor_distance(x, y, q, angle):
     """
     Shoot a ray from the robot in a direction, and return distance
     :param angle: the angle relative to the robot's angle
@@ -50,11 +51,11 @@ def get_sensor_distance(world, W, H, x, y, q, angle):
 
     return distance
 
-def get_lidar(world, W, H, x, y, q, resolution):
+def get_lidar(x, y, q, resolution):
     """
     Shoot rays out in all directions
     :param resolution: How many rays to shoot out (Default 360)
     :return: a list of distances from the robot, to the world
     """
-    return [get_sensor_distance(world, W, H, x, y, q, 360 / resolution * i) for i in range(0, resolution)]
+    return [get_sensor_distance(x, y, q, 360 / resolution * i) for i in range(0, resolution)]
 

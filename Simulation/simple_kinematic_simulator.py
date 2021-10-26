@@ -5,8 +5,9 @@ from numpy import sin, cos, sqrt
 from shapely.geometry import LinearRing, LineString, Point
 from shared.map import Map
 from shared.movement import get_wheel_speeds
-from shared.particle_filtering import generate_particles
+from shared.particle_filtering import compare_states, generate_random_particles, resample
 from shared.route_planner import angle_to_point, turn_to_point
+from shared.step import single_sim_step
 from simulation.bottom_sensor import is_sensor_in_danger_spot
 from simulation.danger_zones import generate_random_danger_spots
 
@@ -15,24 +16,13 @@ from simulation.visualization.pygame_visualizer import PyGameVisualizer, scale_p
 
 from shared.util import calc_rectangle, clamp, euclidean_distance, get_lidar_points, is_point_inside_rectangle, rotate_point, round_point, sensor_readings_to_motor_speeds
 
+from shared.state import W, H, R, L, world, robot_timestep, simulation_timestep
+
 def get_lidar_reading(resolution=360):
-    return get_lidar(world, W, H, x, y, q, resolution)
+    return get_lidar(x, y, q, resolution)
 
 def get_front_sensor(angle):
-    return distance_to_sensor_reading(get_sensor_distance(world, W, H, x, y, q, angle))
-
-# Constants
-R = 0.043  # radius of wheels in meters
-L = 0.092  # distance between wheels in meters
-
-W = 192.0  # width of arena
-H = 113.0  # height of arena
-
-robot_timestep = 0.1  # 1/robot_timestep equals update frequency of robot
-simulation_timestep = 0.01  # timestep in kinematics sim (probably don't touch)
-
-# the world is a rectangular arena with width W and height H
-world = LinearRing([(W / 2, H / 2), (-W / 2, H / 2), (-W / 2, -H / 2), (W / 2, -H / 2)])
+    return distance_to_sensor_reading(get_sensor_distance(x, y, q, angle))
 
 # Variables
 
@@ -52,13 +42,7 @@ def simulationstep(_left_wheel_velocity, _right_wheel_velocity):
     global x, y, q
 
     for step in range(int(robot_timestep / simulation_timestep)):  # step model time/timestep times
-        v_x = cos(q) * (R * _left_wheel_velocity / 2 + R * _right_wheel_velocity / 2)
-        v_y = sin(q) * (R * _left_wheel_velocity / 2 + R * _right_wheel_velocity / 2)
-        omega = (R * _right_wheel_velocity - R * _left_wheel_velocity) / (2 * L)
-
-        x += v_x * simulation_timestep
-        y += v_y * simulation_timestep
-        q += omega * simulation_timestep
+        x, y, q = single_sim_step(x, y, q, _left_wheel_velocity, _right_wheel_velocity)
 
 spots = generate_random_danger_spots(W, H)
 # spots = []
@@ -113,6 +97,8 @@ bottom_sensor_angle = 10
 is_buddy_picked_up = False
 
 return_point = None
+
+particles = generate_random_particles(50)
 
 # Simulation loop
 for cnt in range(1, 5000):
@@ -205,9 +191,13 @@ for cnt in range(1, 5000):
         visualizer.draw_point(*sensor2_pos, (50, 120, 255))
         world_map.mark_as_safe(*sensor2_pos)
     
-    particles = generate_particles(W, H)
-
-    visualizer.draw_points(particles, (120, 0, 120), 0, 0, 0.1)
+    weights = [compare_states(p, lidar_reading) for p in particles]
+    print('min:', min(weights), 'max:', max(weights))
+    
+    for i, p in enumerate(particles):
+        visualizer.draw_point(p[0], p[1], (150, 0, 150), weights[i] / 50)
+    
+    particles = resample(particles, weights)
 
     # Draw info
     visualizer.draw_text(f'Actual robot angle:        {math.degrees(q)}', (300, 20))
