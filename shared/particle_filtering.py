@@ -40,7 +40,6 @@ def resample(samples, weights):
 
 max_lidar_reading = math.sqrt(H**2 + W**2)
 
-# Normalize between 0 - 10
 # Approximate normalization of a weight
 def normalize_weight(w, lidar_resolution):
     return int((w / (max_lidar_reading * lidar_resolution)) ** 2 * 100)

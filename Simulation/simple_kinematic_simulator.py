@@ -43,6 +43,11 @@ def simulationstep(_left_wheel_velocity, _right_wheel_velocity):
 
     for step in range(int(robot_timestep / simulation_timestep)):  # step model time/timestep times
         x, y, q = single_sim_step(x, y, q, _left_wheel_velocity, _right_wheel_velocity)
+    
+    global particles
+    print(particles[0])
+    particles = list(map(lambda p: single_sim_step(*p, _left_wheel_velocity, _right_wheel_velocity), particles))
+    print(particles[0])
 
 spots = generate_random_danger_spots(W, H)
 # spots = []
@@ -53,23 +58,8 @@ visualizer = PyGameVisualizer()
 file = open("trajectory.dat", "w")
 turn_counter = 0
 
-def generate_random_path():
-    path = [(x, y)]
-    for i in range(0, 100):
-        prev_x, prev_y = path[i]
-        
-        # Random, connected path
-        spread = 5
-        mul = 0.45
-        _x = clamp(prev_x + random() * spread, -W * mul, W * mul)
-        _y = clamp(prev_y + random() * spread, -H * mul, H * mul)
-
-        path.append((_x, _y))
-    return path
-
 buddy_pos = (0, 0)
 
-# path_to_explore = generate_random_path()
 path_to_explore = [buddy_pos]
 path_index = 0
 
