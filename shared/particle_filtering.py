@@ -14,10 +14,15 @@ def generate_random_particles(n):
         particles.append(particle)
     return particles
 
+xy_noise = 0.01
+angle_noise = math.radians(50)
+
 # add some noise to an existing state
 def add_noise_to_state(s):
     x, y, angle = s
-    return clamp(x + rand(1), -W/2 + 1, W/2 - 1), clamp(y + rand(1), -H/2 + 1, H/2 - 1), angle + rand(math.radians(5))
+    _W = W * 0.99
+    _H = H * 0.99
+    return clamp(x + rand(xy_noise), -_W/2, _W/2), clamp(y + rand(xy_noise), -_H/2, _H/2), angle + rand(angle_noise)
 
 # Resample
 def stochastic_universal_resampling(n_picks, samples, weights):

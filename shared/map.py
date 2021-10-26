@@ -3,16 +3,18 @@ from shared.BFS import BFS
 
 class Map():
     def __init__(self, MAP_WIDTH, MAP_HEIGHT, MAP_RESOLUTION = 5):
-        self.WIDTH = int(MAP_WIDTH)
-        self.HEIGHT = int(MAP_HEIGHT)
+        self.WIDTH = int(MAP_WIDTH * 100)
+        self.HEIGHT = int(MAP_HEIGHT * 100)
         self.RESOLUTION = int(MAP_RESOLUTION)
         self.map = np.zeros((self.WIDTH // self.RESOLUTION, self.HEIGHT // self.RESOLUTION), dtype=bool)
         self.safe_spots = set()
     
     def map_cord_to_real(self, x, y):
-        return x * self.RESOLUTION - self.WIDTH / 2, y * self.RESOLUTION - self.HEIGHT / 2
+        return (x * self.RESOLUTION - self.WIDTH / 2) / 100, (y * self.RESOLUTION - self.HEIGHT / 2) / 100
     
     def real_coordinate_to_map_coordinate(self, x, y):
+        x *= 100
+        y *= 100
         x += self.WIDTH / 2
         y += self.HEIGHT / 2
         return int(x / self.RESOLUTION), int(y / self.RESOLUTION)

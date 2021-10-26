@@ -5,8 +5,8 @@ from shapely.geometry.polygon import LinearRing
 R = 0.043  # radius of wheels in meters
 L = 0.092  # distance between wheels in meters
 
-W = 192.0  # width of arena
-H = 113.0  # height of arena
+W = 1.92  # width of arena
+H = 1.13  # height of arena
 
 # the world is a rectangular arena with width W and height H
 world = LinearRing([(W / 2, H / 2), (-W / 2, H / 2), (-W / 2, -H / 2), (W / 2, -H / 2)])

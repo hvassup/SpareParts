@@ -25,12 +25,12 @@ def get_front_sensor(angle):
 
 # Variables
 
-x = -W/2 + 1.0  # robot position in meters - x direction - positive to the right
-y = -H/2 + 1.0  # robot position in meters - y direction - positive up
+x = -W/2 + 0.1  # robot position in meters - x direction - positive to the right
+y = -H/2 + 0.1  # robot position in meters - y direction - positive up
 q = math.pi / 2 + 0.1  # robot heading with respect to x-axis in radians
 
-left_wheel_velocity = 50   # robot left wheel velocity in radians/s
-right_wheel_velocity = 50  # robot right wheel velocity in radians/s
+left_wheel_velocity = 2   # robot left wheel velocity in radians/s
+right_wheel_velocity = 2  # robot right wheel velocity in radians/s
 
 
 # Kinematic model
@@ -45,8 +45,8 @@ def simulationstep(_left_wheel_velocity, _right_wheel_velocity):
     
         particles = list(map(lambda p: single_sim_step(*p, _left_wheel_velocity, _right_wheel_velocity), particles))
 
-spots = generate_random_danger_spots(W, H)
-# spots = []
+# spots = generate_random_danger_spots(W, H)
+spots = []
 
 visualizer = PyGameVisualizer()
 # visualizer = MatPlotVisualizer()
@@ -74,10 +74,10 @@ april_tags = [(W / 2, 0), (W / 2, H / 3),
 (-W * 2 / 5, -H / 2), (-W / 5, -H / 2), (0, -H / 2), (W / 5, -H / 2), (W * 2 / 5, -H / 2), 
 (W / 2, -H / 3)]
 
-camera_range = 50
+camera_range = 0.50
 camera_fov = 25
 
-bottom_sensor_offset = 5
+bottom_sensor_offset = L / 2
 bottom_sensor_angle = 10
 
 is_buddy_picked_up = False
@@ -96,7 +96,7 @@ for cnt in range(1, 5000):
     # Draw map
     for safe_spot in world_map.safe_spots:
         res = world_map.RESOLUTION
-        visualizer.draw_rectangle(safe_spot, (res, res), (87, 184, 255))
+        visualizer.draw_rectangle(safe_spot, (res / 100, res / 100), (87, 184, 255))
     # for _y in range(0, map.map.shape[1]):
     #     for _x in range(0, map.map.shape[0]):
     #         pos = (_x * res - map.WIDTH / 2, _y * res - map.HEIGHT / 2)
@@ -109,8 +109,8 @@ for cnt in range(1, 5000):
     lidar_reading = get_lidar_reading(50)
     lidar_points = get_lidar_points(lidar_reading, q)
     center, width_height, _angle = calc_rectangle(lidar_points)
-    cx, cy = center
-    visualizer.draw_points(lidar_points, (255, 255, 255), x, y)
+    cx, cy = center 
+    visualizer.draw_points(lidar_points, (120, 120, 120), x, y)
 
     # Draw camera field of view
     cp1x, cp1y = rotate_point(0, camera_range, q - math.radians(90 + camera_fov))
@@ -120,7 +120,7 @@ for cnt in range(1, 5000):
 
     # Draw april tags
     for i, pos in enumerate(april_tags):
-        visualizer.draw_point(*pos, (255, 255, 0), 2)
+        visualizer.draw_point(*pos, (255, 255, 0), 0.02)
         visualizer.draw_text(str(i), scale_point(*pos))
         if euclidean_distance(*pos, x, y) < camera_range and abs(math.degrees(angle_to_point(x, y, q, *pos))) < camera_fov:
             visualizer.draw_line(x, y, *pos, (255, 0 ,0))
@@ -128,8 +128,8 @@ for cnt in range(1, 5000):
 
     # Draw buddy
     if not is_buddy_picked_up:
-        visualizer.draw_point(*buddy_pos, (255, 192, 203), 5)
-        if euclidean_distance(*buddy_pos, x, y) < 2:
+        visualizer.draw_point(*buddy_pos, (255, 192, 203), 0.05)
+        if euclidean_distance(*buddy_pos, x, y) < L:
             is_buddy_picked_up = True
             path_to_explore = world_map.find_safe_path(buddy_pos, return_point)
 
@@ -138,17 +138,17 @@ for cnt in range(1, 5000):
     
     # visualizer.draw_point(-cx, -cy, (0, 0, 255))
     # Draw robot
-    visualizer.draw_point(x, y, (0, 255, 0), 6)
+    visualizer.draw_point(x, y, (0, 255, 0), L)
 
     # Path finding
     target_pos = path_to_explore[path_index]
     
     distance_to_goal = euclidean_distance(*target_pos, x, y)
     
-    if distance_to_goal < 1:
+    if distance_to_goal < L:
         path_index += 1
 
-    visualizer.draw_points(path_to_explore, (255, 255, 255), 0, 0)
+    visualizer.draw_points(path_to_explore, (0, 0, 0), 0, 0)
     visualizer.draw_point(*target_pos, (0, 255, 255))
     visualizer.draw_line(*target_pos, x, y, (255, 0, 255))
 
@@ -179,9 +179,10 @@ for cnt in range(1, 5000):
     
     weights = [compare_states(p, lidar_reading) for p in particles]
     print('min:', min(weights), 'max:', max(weights))
-    
+
+    m = max(weights)
     for i, p in enumerate(particles):
-        visualizer.draw_point(p[0], p[1], (150, 0, 150), weights[i] / 50)
+        visualizer.draw_point(p[0], p[1], (150, 0, 150), weights[i] / m / 80)
     
     particles = resample(particles, weights)
 
