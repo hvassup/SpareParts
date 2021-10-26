@@ -11,5 +11,5 @@ H = 113.0  # height of arena
 # the world is a rectangular arena with width W and height H
 world = LinearRing([(W / 2, H / 2), (-W / 2, H / 2), (-W / 2, -H / 2), (W / 2, -H / 2)])
 
-robot_timestep = 0.01  # 1/robot_timestep equals update frequency of robot
+robot_timestep = 0.1  # 1/robot_timestep equals update frequency of robot
 simulation_timestep = 0.01  # timestep in kinematics sim (probably don't touch)

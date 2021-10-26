@@ -1,12 +1,11 @@
 import math
-from random import random
 
-from numpy import sin, cos, sqrt
-from shapely.geometry import LinearRing, LineString, Point
+from numpy import sin, cos
+from shapely.geometry import Point
 from shared.map import Map
 from shared.movement import get_wheel_speeds
 from shared.particle_filtering import compare_states, generate_random_particles, resample
-from shared.route_planner import angle_to_point, turn_to_point
+from shared.route_planner import angle_to_point
 from shared.step import single_sim_step
 from simulation.bottom_sensor import is_sensor_in_danger_spot
 from simulation.danger_zones import generate_random_danger_spots
@@ -14,9 +13,9 @@ from simulation.danger_zones import generate_random_danger_spots
 from simulation.sensor_sim import distance_to_sensor_reading, get_lidar, get_sensor_distance
 from simulation.visualization.pygame_visualizer import PyGameVisualizer, scale_point
 
-from shared.util import calc_rectangle, clamp, euclidean_distance, get_lidar_points, is_point_inside_rectangle, rotate_point, round_point, sensor_readings_to_motor_speeds
+from shared.util import calc_rectangle, euclidean_distance, get_lidar_points, is_point_inside_rectangle, rotate_point, round_point
 
-from shared.state import W, H, R, L, world, robot_timestep, simulation_timestep
+from shared.state import W, H, L, world, robot_timestep, simulation_timestep
 
 def get_lidar_reading(resolution=360):
     return get_lidar(x, y, q, resolution)
@@ -39,15 +38,12 @@ right_wheel_velocity = 50  # robot right wheel velocity in radians/s
 # updates robot position and heading based on velocity of wheels and the elapsed time
 # the equations are a forward kinematic model of a two-wheeled robot
 def simulationstep(_left_wheel_velocity, _right_wheel_velocity):
-    global x, y, q
+    global x, y, q, particles
 
     for step in range(int(robot_timestep / simulation_timestep)):  # step model time/timestep times
         x, y, q = single_sim_step(x, y, q, _left_wheel_velocity, _right_wheel_velocity)
     
-    global particles
-    print(particles[0])
-    particles = list(map(lambda p: single_sim_step(*p, _left_wheel_velocity, _right_wheel_velocity), particles))
-    print(particles[0])
+        particles = list(map(lambda p: single_sim_step(*p, _left_wheel_velocity, _right_wheel_velocity), particles))
 
 spots = generate_random_danger_spots(W, H)
 # spots = []
