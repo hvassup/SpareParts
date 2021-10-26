@@ -1,11 +1,8 @@
 import math
 from random import randint, random
 from shared.state import W, H
-from shared.util import clamp
+from shared.util import clamp, rand
 from simulation.sensor_sim import get_lidar
-
-def rand(span):
-    return random() * span - span / 2
 
 def generate_random_particles(n):
     particles = []
@@ -20,8 +17,8 @@ angle_noise = math.radians(50)
 # add some noise to an existing state
 def add_noise_to_state(s):
     x, y, angle = s
-    _W = W * 0.99
-    _H = H * 0.99
+    _W = W * 0.98
+    _H = H * 0.98
     return clamp(x + rand(xy_noise), -_W/2, _W/2), clamp(y + rand(xy_noise), -_H/2, _H/2), angle + rand(angle_noise)
 
 # Resample

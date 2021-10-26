@@ -1,8 +1,12 @@
 import math
+from random import random
 
 import cv2
 import numpy as np
 
+# return a number between -span/2 - span/2
+def rand(span):
+    return random() * span - span / 2
 
 def sensor_readings_to_motor_speeds(sensors):
     sensor1, sensor2, sensor3, sensor4, sensor5 = list(map(lambda x: x / 5025, sensors))

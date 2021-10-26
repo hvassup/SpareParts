@@ -13,7 +13,7 @@ from simulation.danger_zones import generate_random_danger_spots
 from simulation.sensor_sim import distance_to_sensor_reading, get_lidar, get_sensor_distance
 from simulation.visualization.pygame_visualizer import PyGameVisualizer, scale_point
 
-from shared.util import calc_rectangle, euclidean_distance, get_lidar_points, is_point_inside_rectangle, rotate_point, round_point
+from shared.util import calc_rectangle, euclidean_distance, get_lidar_points, is_point_inside_rectangle, rand, rotate_point, round_point
 
 from shared.state import W, H, L, world, robot_timestep, simulation_timestep
 
@@ -25,9 +25,9 @@ def get_front_sensor(angle):
 
 # Variables
 
-x = -W/2 + 0.1  # robot position in meters - x direction - positive to the right
-y = -H/2 + 0.1  # robot position in meters - y direction - positive up
-q = math.pi / 2 + 0.1  # robot heading with respect to x-axis in radians
+x = 0.0  # robot position in meters - x direction - positive to the right
+y = 0.0  # robot position in meters - y direction - positive up
+q = 0.0  # robot heading with respect to x-axis in radians
 
 left_wheel_velocity = 2   # robot left wheel velocity in radians/s
 right_wheel_velocity = 2  # robot right wheel velocity in radians/s
@@ -54,7 +54,7 @@ visualizer = PyGameVisualizer()
 file = open("trajectory.dat", "w")
 turn_counter = 0
 
-buddy_pos = (0, 0)
+buddy_pos = (rand(W), rand(H))
 
 path_to_explore = [buddy_pos]
 path_index = 0
@@ -82,9 +82,9 @@ bottom_sensor_angle = 10
 
 is_buddy_picked_up = False
 
-return_point = None
+return_point = (rand(W), rand(H))
 
-particles = generate_random_particles(50)
+particles = generate_random_particles(20)
 
 # Simulation loop
 for cnt in range(1, 5000):
@@ -145,7 +145,7 @@ for cnt in range(1, 5000):
     
     distance_to_goal = euclidean_distance(*target_pos, x, y)
     
-    if distance_to_goal < L:
+    if distance_to_goal < L / 10:
         path_index += 1
 
     visualizer.draw_points(path_to_explore, (0, 0, 0), 0, 0)
@@ -167,8 +167,8 @@ for cnt in range(1, 5000):
     else:
         visualizer.draw_point(*sensor1_pos, (50, 120, 255))
         world_map.mark_as_safe(*sensor1_pos)
-        if return_point == None:
-            return_point = sensor1_pos
+        # if return_point == None:
+        #     return_point = sensor1_pos
         
     if is_bottom2_sensor_danger:
         visualizer.draw_point(*sensor2_pos, (255, 0, 0))
