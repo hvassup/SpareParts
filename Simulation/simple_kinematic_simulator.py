@@ -1,4 +1,3 @@
-# A prototype simulation of a differential-drive robot with one sensor
 import math
 from random import random
 
@@ -6,46 +5,21 @@ from numpy import sin, cos, sqrt
 from shapely.geometry import LinearRing, LineString, Point
 from shared.map import Map
 from shared.movement import get_wheel_speeds
+from shared.particle_filtering import generate_particles
 from shared.route_planner import angle_to_point, turn_to_point
 from simulation.bottom_sensor import is_sensor_in_danger_spot
+from simulation.danger_zones import generate_random_danger_spots
 
-from simulation.sensor_sim import distance_to_sensor_reading
+from simulation.sensor_sim import distance_to_sensor_reading, get_lidar, get_sensor_distance
 from simulation.visualization.pygame_visualizer import PyGameVisualizer, scale_point
 
 from shared.util import calc_rectangle, clamp, euclidean_distance, get_lidar_points, is_point_inside_rectangle, rotate_point, round_point, sensor_readings_to_motor_speeds
 
-def get_sensor_distance(angle):
-    """
-    Shoot a ray from the robot in a direction, and return distance
-    :param angle: the angle relative to the robot's angle
-    :return: distance from robot to world
-    """
-    angle = angle / 180 * math.pi  # Convert to radians
-    # simple single-ray sensor
-    scalar = W + H
-    ray = LineString([(x, y), (x + cos(q + angle) * scalar, (y + sin(q + angle) * scalar))])
-    # a line from robot to a point outside arena in direction of q
-    s = world.intersection(ray)
+def get_lidar_reading(resolution=360):
+    return get_lidar(world, W, H, x, y, q, resolution)
 
-    distance = sqrt((s.x - x) ** 2 + (s.y - y) ** 2)  # distance to wall
-
-    return distance
-
-def get_lidar(resolution=360):
-    """
-    Shoot rays out in all directions
-    :param resolution: How many rays to shoot out (Default 360)
-    :return: a list of distances from the robot, to the world
-    """
-    return [get_sensor_distance(360 / resolution * i) for i in range(0, resolution)]
-
-def generate_random_danger_spots():
-    size = (15, 30)
-    spots = []
-    for i in range(0, 6):
-        pos = (- W / 2 + random() * (W - size[0]*2), - H / 2 + random() * (H - size[1]*2))
-        spots.append((pos, size))
-    return spots
+def get_front_sensor(angle):
+    return distance_to_sensor_reading(get_sensor_distance(world, W, H, x, y, q, angle))
 
 # Constants
 R = 0.043  # radius of wheels in meters
@@ -86,7 +60,7 @@ def simulationstep(_left_wheel_velocity, _right_wheel_velocity):
         y += v_y * simulation_timestep
         q += omega * simulation_timestep
 
-spots = generate_random_danger_spots()
+spots = generate_random_danger_spots(W, H)
 # spots = []
 
 visualizer = PyGameVisualizer()
@@ -123,7 +97,6 @@ for _y in range(0, world_map.map.shape[1]):
             real_point = _x * world_map.RESOLUTION - world_map.WIDTH / 2, _y * world_map.RESOLUTION - world_map.HEIGHT / 2
             if is_point_inside_rectangle(*real_point, *zone):
                 world_map.mark_as_danger(*real_point)
-                
 
 april_tags = [(W / 2, 0), (W / 2, H / 3),
 (W * 2 / 5, H / 2), (W / 5, H / 2), (0, H / 2), (-W / 5, H / 2), (-W * 2 / 5, H / 2),
@@ -137,17 +110,13 @@ camera_fov = 25
 bottom_sensor_offset = 5
 bottom_sensor_angle = 10
 
-sensor_angles = [30, 15, 0, -15, 30]
-
 is_buddy_picked_up = False
 
 return_point = None
 
 # Simulation loop
 for cnt in range(1, 5000):
-    # simple controller - change direction of wheels every 10 seconds (100*robot_timestep) unless close to wall then
-    # turn on spot
-    sensors = list(map(lambda x: distance_to_sensor_reading(get_sensor_distance(x)), sensor_angles))
+    sensors = [get_front_sensor(30), get_front_sensor(15), get_front_sensor(0), get_front_sensor(-15), get_front_sensor(30)]
     
     # Init visualization
     visualizer.clear()
@@ -165,7 +134,7 @@ for cnt in range(1, 5000):
     #             visualizer.draw_rectangle(pos, (res, res), (87, 184, 255))
 
     # Draw lidar
-    lidar_reading = get_lidar(50)
+    lidar_reading = get_lidar_reading(50)
     lidar_points = get_lidar_points(lidar_reading, q)
     center, width_height, _angle = calc_rectangle(lidar_points)
     cx, cy = center
@@ -236,6 +205,10 @@ for cnt in range(1, 5000):
         visualizer.draw_point(*sensor2_pos, (50, 120, 255))
         world_map.mark_as_safe(*sensor2_pos)
     
+    particles = generate_particles(W, H)
+
+    visualizer.draw_points(particles, (120, 0, 120), 0, 0, 0.1)
+
     # Draw info
     visualizer.draw_text(f'Actual robot angle:        {math.degrees(q)}', (300, 20))
     visualizer.draw_text(f'Actual robot position:    {round_point(x, y)}', (300, 30))
