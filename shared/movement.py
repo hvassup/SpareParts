@@ -2,7 +2,7 @@ import random
 
 from cv2 import SparsePyrLKOpticalFlow
 from shared.route_planner import turn_to_point
-from shared.util import clamp, sensor_readings_to_motor_speeds
+from shared.util import sensor_readings_to_motor_speeds
 
 phase = 3 # Should start at 0
 
@@ -27,7 +27,7 @@ def explore(x, y, q, target_pos, sensors):
 def follow_path():
     pass
 
-def get_wheel_speeds(x, y, q, target_pos, sensors):
+def get_wheel_speeds(x, y, q, target_pos, sensors, b1, b2):
     if phase == 0:
         return find_current_position()
     elif phase == 1:
@@ -35,6 +35,13 @@ def get_wheel_speeds(x, y, q, target_pos, sensors):
     elif phase == 2:
         return follow_path()
     else:
+        # if b1 and not b2:
+        #     return 0, 0.2
+        # elif b2 and not b1:
+        #     return 0.2, 0 
+        # elif b1 and b2:
+        #     return -0.2, -0.2
+        # else:
         sensor_left_mult, sensor_right_mult = sensor_readings_to_motor_speeds(sensors)
         path_left_mult, path_right_mult = turn_to_point(x, y, q, *target_pos)
         left_mult = sensor_left_mult * path_left_mult

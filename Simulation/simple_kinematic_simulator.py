@@ -40,10 +40,10 @@ def get_lidar(resolution=360):
     return [get_sensor_distance(360 / resolution * i) for i in range(0, resolution)]
 
 def generate_random_danger_spots():
-    size = (5, 10)
-    spots = [((-W / 2 + 2, -H / 2 + 2), size)]
-    for i in range(0, 10):
-        pos = (W / 2 - random() * (W - size[0]*2), H / 2 - random() * (H - size[1]*2))
+    size = (15, 30)
+    spots = []
+    for i in range(0, 6):
+        pos = (- W / 2 + random() * (W - size[0]*2), - H / 2 + random() * (H - size[1]*2))
         spots.append((pos, size))
     return spots
 
@@ -66,8 +66,8 @@ x = -W/2 + 1.0  # robot position in meters - x direction - positive to the right
 y = -H/2 + 1.0  # robot position in meters - y direction - positive up
 q = math.pi / 2 + 0.1  # robot heading with respect to x-axis in radians
 
-left_wheel_velocity = 40   # robot left wheel velocity in radians/s
-right_wheel_velocity = 40  # robot right wheel velocity in radians/s
+left_wheel_velocity = 50   # robot left wheel velocity in radians/s
+right_wheel_velocity = 50  # robot right wheel velocity in radians/s
 
 
 # Kinematic model
@@ -87,6 +87,7 @@ def simulationstep(_left_wheel_velocity, _right_wheel_velocity):
         q += omega * simulation_timestep
 
 spots = generate_random_danger_spots()
+# spots = []
 
 visualizer = PyGameVisualizer()
 # visualizer = MatPlotVisualizer()
@@ -108,15 +109,23 @@ def generate_random_path():
         path.append((_x, _y))
     return path
 
-buddy_pos = (W / 2 - 5, 0)
+buddy_pos = (0, 0)
 
 # path_to_explore = generate_random_path()
 path_to_explore = [buddy_pos]
 path_index = 0
 
-world_map = Map(W, H, 1)
+world_map = Map(W, H, 3)
 
-april_tags = [(W / 2, 0), (W / 2, H / 3), 
+for _y in range(0, world_map.map.shape[1]):
+    for _x in range(0, world_map.map.shape[0]):
+        for zone in spots:
+            real_point = _x * world_map.RESOLUTION - world_map.WIDTH / 2, _y * world_map.RESOLUTION - world_map.HEIGHT / 2
+            if is_point_inside_rectangle(*real_point, *zone):
+                world_map.mark_as_danger(*real_point)
+                
+
+april_tags = [(W / 2, 0), (W / 2, H / 3),
 (W * 2 / 5, H / 2), (W / 5, H / 2), (0, H / 2), (-W / 5, H / 2), (-W * 2 / 5, H / 2),
 (-W / 2, H / 3), (-W / 2, 0), (-W / 2, -H / 3),
 (-W * 2 / 5, -H / 2), (-W / 5, -H / 2), (0, -H / 2), (W / 5, -H / 2), (W * 2 / 5, -H / 2), 
@@ -125,11 +134,14 @@ april_tags = [(W / 2, 0), (W / 2, H / 3),
 camera_range = 50
 camera_fov = 25
 
-bottom_sensor_offset = 3
-bottom_sensor_angle = 25
+bottom_sensor_offset = 5
+bottom_sensor_angle = 10
 
 sensor_angles = [30, 15, 0, -15, 30]
 
+is_buddy_picked_up = False
+
+return_point = None
 
 # Simulation loop
 for cnt in range(1, 5000):
@@ -163,27 +175,29 @@ for cnt in range(1, 5000):
     cp1x, cp1y = rotate_point(0, camera_range, q - math.radians(90 + camera_fov))
     cp2x, cp2y = rotate_point(0, camera_range, q - math.radians(90 - camera_fov))
     visualizer.draw_line(x, y, x + cp1x, y + cp1y, (50, 0, 255))
-    visualizer.draw_line(x, y, x + cp2x, y + cp2y, (50, 0, 255))    
+    visualizer.draw_line(x, y, x + cp2x, y + cp2y, (50, 0, 255))
 
     # Draw april tags
     for i, pos in enumerate(april_tags):
-        visualizer.draw_point(*pos, (255, 255, 0), 3)
+        visualizer.draw_point(*pos, (255, 255, 0), 2)
         visualizer.draw_text(str(i), scale_point(*pos))
         if euclidean_distance(*pos, x, y) < camera_range and abs(math.degrees(angle_to_point(x, y, q, *pos))) < camera_fov:
             visualizer.draw_line(x, y, *pos, (255, 0 ,0))
             # print(f'I can see {i}')
 
     # Draw buddy
-    visualizer.draw_point(*buddy_pos, (255, 192, 203), 5)
-    if euclidean_distance(*buddy_pos, x, y) < camera_range and abs(math.degrees(angle_to_point(x, y, q, *buddy_pos))) < camera_fov:
-        break
+    if not is_buddy_picked_up:
+        visualizer.draw_point(*buddy_pos, (255, 192, 203), 5)
+        if euclidean_distance(*buddy_pos, x, y) < 2:
+            is_buddy_picked_up = True
+            path_to_explore = world_map.find_safe_path(buddy_pos, return_point)
 
     # Draw danger spots
     visualizer.draw_rectangles(spots, (120, 0, 0))
     
     # visualizer.draw_point(-cx, -cy, (0, 0, 255))
     # Draw robot
-    visualizer.draw_point(x, y, (0, 255, 0), 11)
+    visualizer.draw_point(x, y, (0, 255, 0), 6)
 
     # Path finding
     target_pos = path_to_explore[path_index]
@@ -202,15 +216,20 @@ for cnt in range(1, 5000):
     bp2x, bp2y = rotate_point(0, bottom_sensor_offset, q - math.radians(90 - bottom_sensor_angle))
     sensor1_pos = (x + bp1x, y + bp1y)
     sensor2_pos = (x + bp2x, y + bp2y)
+
+    is_bottom1_sensor_danger = is_sensor_in_danger_spot(*sensor1_pos, spots)
+    is_bottom2_sensor_danger = is_sensor_in_danger_spot(*sensor2_pos, spots)
     
-    if is_sensor_in_danger_spot(*sensor1_pos, spots):
+    if is_bottom1_sensor_danger:
         visualizer.draw_point(*sensor1_pos, (255, 0, 0))
         world_map.mark_as_danger(*sensor1_pos)
     else:
         visualizer.draw_point(*sensor1_pos, (50, 120, 255))
         world_map.mark_as_safe(*sensor1_pos)
+        if return_point == None:
+            return_point = sensor1_pos
         
-    if is_sensor_in_danger_spot(*sensor2_pos, spots):
+    if is_bottom2_sensor_danger:
         visualizer.draw_point(*sensor2_pos, (255, 0, 0))
         world_map.mark_as_danger(*sensor2_pos)
     else:
@@ -222,11 +241,13 @@ for cnt in range(1, 5000):
     visualizer.draw_text(f'Actual robot position:    {round_point(x, y)}', (300, 30))
     visualizer.draw_text(f'Estimated robot position: {round_point(-cx, -cy)}', (300, 40))
     visualizer.draw_text(f'Distance to goal:        {distance_to_goal}', (300, 50))
+    visualizer.draw_text(f'Buddy pos:        {buddy_pos}', (300, 60))
+    visualizer.draw_text(f'Start pos:        {return_point}', (300, 70))
 
     visualizer.show()
 
     
-    left_mult, right_mult = get_wheel_speeds(x, y, q, target_pos, sensors)
+    left_mult, right_mult = get_wheel_speeds(x, y, q, target_pos, sensors, is_bottom1_sensor_danger, is_bottom2_sensor_danger)
 
     # step simulation
     simulationstep(left_wheel_velocity * left_mult, right_wheel_velocity * right_mult)

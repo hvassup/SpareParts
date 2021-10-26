@@ -33,10 +33,10 @@ class PyGameVisualizer():
         img = font1.render(msg, True, (255, 255, 255))
         self.surface.blit(img, point)
         
-    def draw_point(self, x, y, col=(255, 255, 255), size=2):
-        pygame.draw.circle(self.surface, col, scale_point(x, y), size)
+    def draw_point(self, x, y, col=(255, 255, 255), size=1):
+        pygame.draw.circle(self.surface, col, scale_point(x, y), size * scale)
     
-    def draw_points(self, points, col, originX=0, originY=0, size=2):
+    def draw_points(self, points, col, originX=0, originY=0, size=1):
         for x, y in points:
             self.draw_point(originX + x, originY + y, col, size)
     
