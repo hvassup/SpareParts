@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import os
-from shared.util import sensor_readings_to_motor_speeds
+#from shared.util import sensor_readings_to_motor_speeds
 import time
 from time import sleep
 
@@ -23,13 +23,13 @@ from picamera import PiCamera
 import cv2
 import apriltag
 
-print("Starting robot")
 
 '''
 Thymio class with sensing and driving functions
 '''
 class Thymio:
     def __init__(self):
+        print("Starting robot")
         self.aseba = self.setup()
 
     def drive(self, left_wheel_speed, right_wheel_speed):
@@ -63,20 +63,21 @@ class Thymio:
 
         print('Ground sensors on')
         
-        prox_ground = self.aseba.GetVariable("thymio-II", "prox.ground.reflected")
-        
-        ground_sensor_0.insert(0, prox_ground[0])
-        del ground_sensor_0[5]
-        ground_sensor_1.insert(0, prox_ground[1])
-        del ground_sensor_1[5]
+        while True:
+            prox_ground = self.aseba.GetVariable("thymio-II", "prox.ground.reflected")
+            
+            ground_sensor_0.insert(0, prox_ground[0])
+            del ground_sensor_0[5]
+            ground_sensor_1.insert(0, prox_ground[1])
+            del ground_sensor_1[5]
 
-        smoothed_ground_0 = mean(ground_sensor_0)
-        smoothed_ground_1 = mean(ground_sensor_1)
+            smoothed_ground_0 = mean(ground_sensor_0)
+            smoothed_ground_1 = mean(ground_sensor_1)
 
-        if smoothed_ground_0 > 500 and smoothed_ground_1 > 500:
-            print("White")
-        else:
-            print("Black")
+            if smoothed_ground_0 > 500 and smoothed_ground_1 > 500:
+                print("White")
+            else:
+                print("Black")
 
     '''
     Initialization of the Thymio
@@ -126,9 +127,6 @@ def lidarScan():
             return
         for (_, angle, distance) in scan:
             scan_data[min([359, floor(angle)])] = distance
-
-def testLidar():
-    print(scan_data)
 
 #----------------------- Camera init ------------------------
 
@@ -181,18 +179,22 @@ def main():
     sensing_thread.daemon = True
     sensing_thread.start()
 
-    # Start lidar scanning
-    scanner_thread = threading.Thread(target=lidarScan)
-    scanner_thread.daemon = True
-    scanner_thread.start()
-    
-    # make it drive and avoid walls
-    while True:
-        print('Driving!')
-        left_multiplier, right_multiplier = robot.get_motor_multipliers()
-        robot.drive(200 * left_multiplier, 200 * right_multiplier)
-        sleep(0.01)
+    sleep(5)
     robot.stop()
+
+    # Start lidar scanning
+    #scanner_thread = threading.Thread(target=lidarScan)
+    #scanner_thread.daemon = True
+    #scanner_thread.start()
+    
+   # print("Lidar", scan_data)
+   # make it drive and avoid walls
+   # while True:
+   #     print('Driving!')
+   #     left_multiplier, right_multiplier = robot.get_motor_multipliers()
+   #    robot.drive(200 * left_multiplier, 200 * right_multiplier)
+   #     sleep(0.01)
+   # robot.stop()
 
 
 # ------------------- Main loop end ------------------------
