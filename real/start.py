@@ -5,11 +5,13 @@ from shared.util import sensor_readings_to_motor_speeds
 import time
 from time import sleep
 
+# initialize asebamedulla in background and wait 0.3s to let asebamedulla startup
+os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
+
 import dbus
 import dbus.mainloop.glib
 from threading import Thread
 import threading
-import matplotlib.pyplot as plt
 
 from math import cos, sin, pi, floor
 import numpy as np
@@ -21,9 +23,6 @@ from picamera import PiCamera
 import cv2
 import apriltag
 
-# initialize asebamedulla in background and wait 0.3s to let asebamedulla startup
-
-os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
 print("Starting robot")
 
 '''
@@ -56,14 +55,16 @@ class Thymio:
     Smoothing is implemented to account for noise
     (one step)
     '''
-    def sens():
-        prox_ground = self.aseba.GetVariable("thymio-II", "prox.ground.reflected")
+    def sens(self):
 
         # Smoothing initialization
         ground_sensor_0 = [500, 500, 500, 500, 500]
         ground_sensor_1 = [500, 500, 500, 500, 500]
 
         print('Ground sensors on')
+        
+        prox_ground = self.aseba.GetVariable("thymio-II", "prox.ground.reflected")
+        
         ground_sensor_0.insert(0, prox_ground[0])
         del ground_sensor_0[5]
         ground_sensor_1.insert(0, prox_ground[1])
@@ -77,7 +78,6 @@ class Thymio:
         else:
             print("Black")
 
-    # ------------------ init script -------------------------
     '''
     Initialization of the Thymio
     '''
@@ -111,30 +111,6 @@ class Thymio:
         # Currently only the error is logged. Maybe interrupt the mainloop here
         print("dbus error: %s" % str(e))
 
-
-    # init the dbus main loop
-    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-        
-    # get stub of the aseba network
-    bus = dbus.SessionBus()
-    asebaNetworkObject = bus.get_object('ch.epfl.mobots.Aseba', '/')
-        
-    # prepare interface
-    asebaNetwork = dbus.Interface(
-        asebaNetworkObject,
-        dbus_interface='ch.epfl.mobots.AsebaNetwork'
-    )
-        
-    # load the file which is run on the thymio
-    asebaNetwork.LoadScripts(
-        'thympi.aesl',
-        reply_handler=dbusError,
-        error_handler=dbusError
-    )
-
-    #signal scanning thread to exit
-    exit_now = False
-
 #----------------------- Lidar init -------------------------
 
 PORT_NAME = '/dev/ttyUSB0'
@@ -157,6 +133,7 @@ def testLidar():
 #----------------------- Camera init ------------------------
 
 # initialize camera & time intervals for image capture
+print('Camera starting up')
 start_time = time.time()
 camera = PiCamera()
 
