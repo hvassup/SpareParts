@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import os
-#from shared.util import sensor_readings_to_motor_speeds
+from shared.util import sensor_readings_to_motor_speeds
 import time
 from time import sleep
 
@@ -123,6 +123,7 @@ scan_data = [0]*360 # store the lidar readings
 def lidarScan():
     print("Starting background lidar scanning")
     for scan in lidar.iter_scans():
+      #  print(scan_data)
         if(exit_now):
             return
         for (_, angle, distance) in scan:
@@ -175,26 +176,25 @@ def findtag():
 def main():
     robot = Thymio()
 
+    # Start lidar scanning
+    scanner_thread = threading.Thread(target=lidarScan)
+    scanner_thread.daemon = True
+    scanner_thread.start()
+
+    # Start ground sensing
     sensing_thread = Thread(target=robot.sens)
     sensing_thread.daemon = True
     sensing_thread.start()
 
     sleep(5)
     robot.stop()
-
-    # Start lidar scanning
-    #scanner_thread = threading.Thread(target=lidarScan)
-    #scanner_thread.daemon = True
-    #scanner_thread.start()
     
-   # print("Lidar", scan_data)
    # make it drive and avoid walls
-   # while True:
-   #     print('Driving!')
-   #     left_multiplier, right_multiplier = robot.get_motor_multipliers()
-   #    robot.drive(200 * left_multiplier, 200 * right_multiplier)
-   #     sleep(0.01)
-   # robot.stop()
+    while True:
+        print('Driving!')
+        left_multiplier, right_multiplier = robot.get_motor_multipliers()
+        robot.drive(200 * left_multiplier, 200 * right_multiplier)
+        sleep(0.01)
 
 
 # ------------------- Main loop end ------------------------
