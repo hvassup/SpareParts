@@ -47,47 +47,23 @@ class Thymio:
         return sensor_readings_to_motor_speeds(prox_horizontal)
     
     '''
-    Responsible for Thymio sensors
-    Smoothing is implemented for both ground & horizontal sensors
-    One step
+    Responsible for Thymio ground sensors
+    Smoothing is implemented to account for noise
+    (one step)
     '''
-
     def sens():
-        
-        prox_horizontal = self.aseba.GetVariable("thymio-II", "prox.horizontal")
         prox_ground = self.aseba.GetVariable("thymio-II", "prox.ground.reflected")
 
         # Smoothing initialization
-        front_sensor_0 = [500, 500, 500, 500, 500]  #Did we take avg readings for the horizontal ones?
-        front_sensor_1 = [500, 500, 500, 500, 500]
-        front_sensor_2 = [500, 500, 500, 500, 500]
-        front_sensor_3 = [500, 500, 500, 500, 500]
-        front_sensor_4 = [500, 500, 500, 500, 500]
         ground_sensor_0 = [500, 500, 500, 500, 500]
         ground_sensor_1 = [500, 500, 500, 500, 500]
 
-        print('Ground and horizontal sensors on')
-
-        front_sensor_0.insert(0, prox_horizontal[0])
-        del front_sensor_0[5]
-        front_sensor_1.insert(0, prox_horizontal[1])
-        del front_sensor_1[5]
-        front_sensor_2.insert(0, prox_horizontal[2])
-        del front_sensor_2[5]
-        front_sensor_3.insert(0, prox_horizontal[3])
-        del front_sensor_3[5]
-        front_sensor_4.insert(0, prox_horizontal[4])
-        del front_sensor_4[5]
+        print('Ground sensors on')
         ground_sensor_0.insert(0, prox_ground[0])
         del ground_sensor_0[5]
         ground_sensor_1.insert(0, prox_ground[1])
         del ground_sensor_1[5]
 
-        smoothed_front_0 = mean(front_sensor_0)
-        smoothed_front_1 = mean(front_sensor_1)
-        smoothed_front_2 = mean(front_sensor_2)
-        smoothed_front_3 = mean(front_sensor_3)
-        smoothed_front_4 = mean(front_sensor_4)
         smoothed_ground_0 = mean(ground_sensor_0)
         smoothed_ground_1 = mean(ground_sensor_1)
 
@@ -96,11 +72,10 @@ class Thymio:
         else:
             print("Black")
 
-        # do something with the horizontal sensors
-        # or is this handles by drive??
-
-# ------------------ init script -------------------------
-
+    # ------------------ init script -------------------------
+    '''
+    Initialization of the Thymio
+    '''
     def setup(self):
         print("Setting up")
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -131,33 +106,33 @@ class Thymio:
         # Currently only the error is logged. Maybe interrupt the mainloop here
         print("dbus error: %s" % str(e))
         
-# initialize asebamedulla in background and wait 0.3s to let asebamedulla startup
+    # initialize asebamedulla in background and wait 0.3s to let asebamedulla startup
 
-os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
-print("Starting robot")
+    os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
+    print("Starting robot")
 
-# init the dbus main loop
-dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-    
-# get stub of the aseba network
-bus = dbus.SessionBus()
-asebaNetworkObject = bus.get_object('ch.epfl.mobots.Aseba', '/')
-    
-# prepare interface
-asebaNetwork = dbus.Interface(
-    asebaNetworkObject,
-    dbus_interface='ch.epfl.mobots.AsebaNetwork'
-)
-    
-# load the file which is run on the thymio
-asebaNetwork.LoadScripts(
-    'thympi.aesl',
-    reply_handler=dbusError,
-    error_handler=dbusError
-)
+    # init the dbus main loop
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+        
+    # get stub of the aseba network
+    bus = dbus.SessionBus()
+    asebaNetworkObject = bus.get_object('ch.epfl.mobots.Aseba', '/')
+        
+    # prepare interface
+    asebaNetwork = dbus.Interface(
+        asebaNetworkObject,
+        dbus_interface='ch.epfl.mobots.AsebaNetwork'
+    )
+        
+    # load the file which is run on the thymio
+    asebaNetwork.LoadScripts(
+        'thympi.aesl',
+        reply_handler=dbusError,
+        error_handler=dbusError
+    )
 
-#signal scanning thread to exit
-exit_now = False
+    #signal scanning thread to exit
+    exit_now = False
 
 #----------------------- Lidar init -------------------------
 
@@ -231,9 +206,9 @@ def main():
     
     # print(scan_data) 
 
-    thread = Thread(target=robot.sens)
-    thread.daemon = True
-    thread.start()
+    sensing_thread = Thread(target=robot.sens)
+    sensing_thread.daemon = True
+    sensing_thread.start()
     
     # make it drive and avoid walls
     while True:
