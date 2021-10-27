@@ -21,6 +21,11 @@ from picamera import PiCamera
 import cv2
 import apriltag
 
+# initialize asebamedulla in background and wait 0.3s to let asebamedulla startup
+
+os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
+print("Starting robot")
+
 '''
 Thymio class with sensing and driving functions
 '''
@@ -105,11 +110,7 @@ class Thymio:
         # dbus errors can be handled here.
         # Currently only the error is logged. Maybe interrupt the mainloop here
         print("dbus error: %s" % str(e))
-        
-    # initialize asebamedulla in background and wait 0.3s to let asebamedulla startup
 
-    os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
-    print("Starting robot")
 
     # init the dbus main loop
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -150,11 +151,6 @@ def lidarScan():
         for (_, angle, distance) in scan:
             scan_data[min([359, floor(angle)])] = distance
 
-# Start scanning
-scanner_thread = threading.Thread(target=lidarScan)
-scanner_thread.daemon = True
-scanner_thread.start()
-
 def testLidar():
     print(scan_data)
 
@@ -164,7 +160,6 @@ def testLidar():
 start_time = time.time()
 camera = PiCamera()
 
-# Use camera for detecting april tags
 def takePicture():
     camera.start_preview()
 
@@ -188,6 +183,7 @@ def takePicture():
 
 # Loop which takes images with a delay
 def findtag():
+    print('Looking for april tag')
     while True:
         tag = 0
         rounded = round(time.time() - start_time, 2)
@@ -203,15 +199,19 @@ def findtag():
 
 def main():
     robot = Thymio()
-    
-    # print(scan_data) 
 
     sensing_thread = Thread(target=robot.sens)
     sensing_thread.daemon = True
     sensing_thread.start()
+
+    # Start lidar scanning
+    scanner_thread = threading.Thread(target=lidarScan)
+    scanner_thread.daemon = True
+    scanner_thread.start()
     
     # make it drive and avoid walls
     while True:
+        print('Driving!')
         left_multiplier, right_multiplier = robot.get_motor_multipliers()
         robot.drive(200 * left_multiplier, 200 * right_multiplier)
         sleep(0.01)
