@@ -124,8 +124,7 @@ def lidarScan():
     print("Starting background lidar scanning")
     for scan in lidar.iter_scans():
       #  print(scan_data)
-        if(exit_now):
-            return
+        print('Lidar')
         for (_, angle, distance) in scan:
             scan_data[min([359, floor(angle)])] = distance
 
@@ -172,46 +171,42 @@ def findtag():
 #--------------------- init script end ----------------------
 
 # ------------------ Main loop ------------------------------
-scanner_thread = None
-sensing_thread = None
-robot = None
 
 def main():
-    robot = Thymio()
+    try:
+        robot = Thymio()
 
-    # Start lidar scanning
-    scanner_thread = threading.Thread(target=lidarScan)
-    scanner_thread.daemon = True
-    scanner_thread.start()
+        # Start lidar scanning
+        scanner_thread = threading.Thread(target=lidarScan)
+        scanner_thread.daemon = True
+        scanner_thread.start()
 
-    # Start ground sensing
-    sensing_thread = Thread(target=robot.sens)
-    sensing_thread.daemon = True
-    sensing_thread.start()
-    
-   # make it drive and avoid walls
-    while True:
-        print('Driving!')
-        left_multiplier, right_multiplier = robot.get_motor_multipliers()
-        robot.drive(200 * left_multiplier, 200 * right_multiplier)
-        sleep(0.1)
+        # Start ground sensing
+        sensing_thread = Thread(target=robot.sens)
+        sensing_thread.daemon = True
+        sensing_thread.start()
+        
+    # make it drive and avoid walls
+        while True:
+            print('Driving!')
+            left_multiplier, right_multiplier = robot.get_motor_multipliers()
+            robot.drive(200 * left_multiplier, 200 * right_multiplier)
+            sleep(0.1)
+        
+    except KeyboardInterrupt:
+        print("Stopping robot")
+        scanner_thread.terminate()
+        sensing_thread.terminate()
+        sleep(1)
+        lidar.stop()
+        lidar.disconnect()
+        os.system("pkill -n asebamedulla")
+        print("asebamodulla killed")
 
 
 # ------------------- Main loop end ------------------------
 
 if __name__ == '__main__' or  __name__ == 'real.start':
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("Stopping robot")
-        exit_now = True
-        sleep(1)
-        lidar.stop()
-        lidar.disconnect()
-        robot.stop()
-        scanner_thread.terminate()
-        sensing_thread.terminate()
-        os.system("pkill -n asebamedulla")
-        print("asebamodulla killed")
+    main()
 
 # -------------------
