@@ -174,6 +174,7 @@ def findtag():
 # ------------------ Main loop ------------------------------
 scanner_thread = None
 sensing_thread = None
+robot = None
 
 def main():
     robot = Thymio()
@@ -187,16 +188,13 @@ def main():
     sensing_thread = Thread(target=robot.sens)
     sensing_thread.daemon = True
     sensing_thread.start()
-
-    sleep(5)
-    robot.stop()
     
    # make it drive and avoid walls
     while True:
         print('Driving!')
         left_multiplier, right_multiplier = robot.get_motor_multipliers()
         robot.drive(200 * left_multiplier, 200 * right_multiplier)
-        sleep(0.01)
+        sleep(0.1)
 
 
 # ------------------- Main loop end ------------------------
@@ -210,6 +208,7 @@ if __name__ == '__main__' or  __name__ == 'real.start':
         sleep(1)
         lidar.stop()
         lidar.disconnect()
+        robot.stop()
         scanner_thread.terminate()
         sensing_thread.terminate()
         os.system("pkill -n asebamedulla")
