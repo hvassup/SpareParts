@@ -201,7 +201,7 @@ def main():
 
 # ------------------- Main loop end ------------------------
 
-if __name__ == '__main__':
+if __name__ == '__main__' or  __name__ == 'real.start':
     try:
         main()
     except KeyboardInterrupt:
