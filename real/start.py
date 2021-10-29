@@ -172,6 +172,8 @@ def findtag():
 #--------------------- init script end ----------------------
 
 # ------------------ Main loop ------------------------------
+scanner_thread = None
+sensing_thread = None
 
 def main():
     robot = Thymio()
@@ -208,6 +210,8 @@ if __name__ == '__main__':
         sleep(1)
         lidar.stop()
         lidar.disconnect()
+        scanner_thread.terminate()
+        sensing_thread.terminate()
         os.system("pkill -n asebamedulla")
         print("asebamodulla killed")
 
