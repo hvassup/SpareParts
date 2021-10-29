@@ -21,21 +21,25 @@ def add_noise_to_state(s):
     _H = H * 0.98
     return clamp(x + rand(xy_noise), -_W/2, _W/2), clamp(y + rand(xy_noise), -_H/2, _H/2), angle + rand(angle_noise)
 
-# Resample
+# Randomly pick weighted samples
 def stochastic_universal_resampling(n_picks, samples, weights):
-    a = []
+    indexes = []
     for i in range(0, n_picks):
-        a += ([i] * weights[i])
+        indexes += [i] * weights[i]
     
-    P = (len(a) // n_picks)
-    start = randint(0, P)
-    
-    return [samples[a[i]] for i in range(start, len(a), P)]
+    P = (len(indexes) / n_picks)
+    start = random() * P
 
-# This is possible to do in O(N log N)
-# but now it is done in O(N^2) :(
+    new_samples = []
+    i = start
+    while i < len(indexes):
+        new_samples.append(samples[indexes[int(i)]])
+        i += P
+    return new_samples
+
 def resample(samples, weights):
-    n = len(samples)    
+    n = len(samples)
+    print(n)
     picked_samples = stochastic_universal_resampling(n, samples, weights)
     noisy_samples = list(map(add_noise_to_state, picked_samples))
     return noisy_samples
@@ -49,14 +53,16 @@ def normalize_weight(w, lidar_resolution):
 # Simulate sensor readings and compare with actual readings to evaluate state
 def compare_states(s1, lidar_reading):
     x1, y1, angle1 = s1
-
+    
     lidar_resolution = 4
     real_resolution = len(lidar_reading)
 
     reading1 = get_lidar(x1, y1, angle1, lidar_resolution)
-    
+    step = real_resolution // lidar_resolution
+
     weight = 0
     for i in range(0, lidar_resolution):
-        weight += max_lidar_reading - abs(reading1[i] - lidar_reading[real_resolution // lidar_resolution * i])
-    return normalize_weight(weight, lidar_resolution)
+        weight += abs(reading1[i] - lidar_reading[step * i])
+    weight -= lidar_resolution * max_lidar_reading
     
+    return normalize_weight(weight, lidar_resolution)

@@ -1,4 +1,5 @@
 import math
+import time
 
 from numpy import sin, cos
 from shapely.geometry import Point
@@ -84,19 +85,20 @@ is_buddy_picked_up = False
 
 return_point = (rand(W), rand(H))
 
-particles = generate_random_particles(20)
+particles = generate_random_particles(50)
 
 # Simulation loop
-for cnt in range(1, 5000):
+for cnt in range(1, 500):
+    fps_time = time.time()
     sensors = [get_front_sensor(30), get_front_sensor(15), get_front_sensor(0), get_front_sensor(-15), get_front_sensor(30)]
     
     # Init visualization
     visualizer.clear()
 
     # Draw map
-    for safe_spot in world_map.safe_spots:
-        res = world_map.RESOLUTION
-        visualizer.draw_rectangle(safe_spot, (res / 100, res / 100), (87, 184, 255))
+    # for safe_spot in world_map.safe_spots:
+    #     res = world_map.RESOLUTION
+    #     visualizer.draw_rectangle(safe_spot, (res / 100, res / 100), (87, 184, 255))
     # for _y in range(0, map.map.shape[1]):
     #     for _x in range(0, map.map.shape[0]):
     #         pos = (_x * res - map.WIDTH / 2, _y * res - map.HEIGHT / 2)
@@ -109,7 +111,7 @@ for cnt in range(1, 5000):
     lidar_reading = get_lidar_reading(50)
     lidar_points = get_lidar_points(lidar_reading, q)
     center, width_height, _angle = calc_rectangle(lidar_points)
-    cx, cy = center 
+    cx, cy = center
     visualizer.draw_points(lidar_points, (120, 120, 120), x, y)
 
     # Draw camera field of view
@@ -178,14 +180,16 @@ for cnt in range(1, 5000):
         world_map.mark_as_safe(*sensor2_pos)
     
     weights = [compare_states(p, lidar_reading) for p in particles]
-    print('min:', min(weights), 'max:', max(weights))
+    # print('min:', min(weights), 'max:', max(weights))
 
     m = max(weights)
-    for i, p in enumerate(particles):
+    for i in range(0, len(particles)):
+        p = particles[i]
         visualizer.draw_point(p[0], p[1], (150, 0, 150), weights[i] / m / 80)
     
     particles = resample(particles, weights)
 
+    fps_end_time = time.time() - fps_time
     # Draw info
     visualizer.draw_text(f'Actual robot angle:        {math.degrees(q)}', (300, 20))
     visualizer.draw_text(f'Actual robot position:    {round_point(x, y)}', (300, 30))
@@ -193,6 +197,7 @@ for cnt in range(1, 5000):
     visualizer.draw_text(f'Distance to goal:        {distance_to_goal}', (300, 50))
     visualizer.draw_text(f'Buddy pos:        {buddy_pos}', (300, 60))
     visualizer.draw_text(f'Start pos:        {return_point}', (300, 70))
+    visualizer.draw_text(f'FPS:        {1 / fps_end_time}', (10, 10))
 
     visualizer.show()
 
@@ -200,7 +205,9 @@ for cnt in range(1, 5000):
     left_mult, right_mult = get_wheel_speeds(x, y, q, target_pos, sensors, is_bottom1_sensor_danger, is_bottom2_sensor_danger)
 
     # step simulation
+    start_time = time.time()
     simulationstep(left_wheel_velocity * left_mult, right_wheel_velocity * right_mult)
+    print(time.time() - start_time)
 
     # check collision with arena walls
     if world.distance(Point(x, y)) < L / 2:
@@ -211,5 +218,5 @@ for cnt in range(1, 5000):
 
     if cnt % 50 == 0:
         file.write(str(x) + ", " + str(y) + ", " + str(cos(q) * 0.05) + ", " + str(sin(q) * 0.05) + "\n")
-
+    
 file.close()

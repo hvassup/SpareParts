@@ -1,4 +1,5 @@
-from math import sqrt, cos, sin, pi
+from math import radians, sqrt, cos, sin, pi
+import math
 from shapely.geometry.linestring import LineString
 
 from shared.state import W, H, world
@@ -40,10 +41,10 @@ def get_sensor_distance(x, y, q, angle):
     :param angle: the angle relative to the robot's angle
     :return: distance from robot to world
     """
-    angle = angle / 180 * pi  # Convert to radians
+    new_angle = q + radians(angle)
     # simple single-ray sensor
     scalar = W + H
-    ray = LineString([(x, y), (x + cos(q + angle) * scalar, (y + sin(q + angle) * scalar))])
+    ray = LineString([(x, y), (x + cos(new_angle) * scalar, (y + sin(new_angle) * scalar))])
     # a line from robot to a point outside arena in direction of q
     s = world.intersection(ray)
 
@@ -57,5 +58,6 @@ def get_lidar(x, y, q, resolution):
     :param resolution: How many rays to shoot out (Default 360)
     :return: a list of distances from the robot, to the world
     """
-    return [get_sensor_distance(x, y, q, 360 / resolution * i) for i in range(0, resolution)]
+    step = 360 / resolution
+    return [get_sensor_distance(x, y, q, step * i) for i in range(0, resolution)]
 
