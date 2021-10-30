@@ -1,7 +1,6 @@
 import math
-from random import randint, random
+from random import random
 
-from numpy import angle
 from shared.state import W, H, april_tag_angles
 from shared.util import clamp, rand
 from simulation.sensor_sim import get_lidar
@@ -69,7 +68,7 @@ def compare_states(s1, lidar_reading, april_tags):
 
     reading1 = get_lidar(x1, y1, angle1, lidar_resolution)
     step = real_resolution // lidar_resolution
-    
+
     weight = 0
     for i in range(0, lidar_resolution):
         weight += abs(reading1[i] - lidar_reading[step * i])
@@ -77,9 +76,9 @@ def compare_states(s1, lidar_reading, april_tags):
 
     # April tag rating
     if len(april_tags) > 0:
-        middle_april_tag = april_tags[round(len(april_tags)/2)]
+        middle_april_tag = april_tags[round(len(april_tags) / 2)]
         desired_angle = april_tag_angles[middle_april_tag[1]]
         if abs(desired_angle - angle1) < 45:
             weight -= max_lidar_reading
-    
+
     return normalize_weight(weight, lidar_resolution)

@@ -10,19 +10,17 @@ os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
 from shared.map import Map
 from shared.particle_filtering import compare_states, generate_random_particles, resample
 
-from shared.util import moving_average, rolling_average, sensor_readings_to_motor_speeds
+from shared.util import moving_average, rolling_average
 import time
 from time import sleep
 
-from shared.state import W, H   
+from shared.state import W, H
 import dbus
 import dbus.mainloop.glib
 from threading import Thread
 import threading
 
-from math import cos, sin, pi, floor
 import numpy as np
-from statistics import mean
 
 # sensors
 from adafruit_rplidar import RPLidar
@@ -30,10 +28,11 @@ from picamera import PiCamera
 import cv2
 import apriltag
 
-
 '''
 Thymio class with sensing and driving functions
 '''
+
+
 class Thymio:
     def __init__(self):
         print("Starting robot")
@@ -59,12 +58,12 @@ class Thymio:
         else:
             return 1, 1
 
-    
     '''
     Responsible for Thymio ground sensors
     Smoothing is implemented to account for noise
     (one step)
     '''
+
     def sens(self):
 
         # Smoothing initialization
@@ -72,7 +71,7 @@ class Thymio:
         ground_sensor_1 = [500, 500, 500, 500, 500]
 
         print('Ground sensors on')
-        
+
         while True:
             prox_ground = self.aseba.GetVariable("thymio-II", "prox.ground.reflected")
             smoothed_ground_0 = rolling_average(ground_sensor_0, prox_ground[0])
@@ -87,14 +86,16 @@ class Thymio:
             # smoothed_ground_1 = mean(ground_sensor_1)
 
             if smoothed_ground_0 > 500 and smoothed_ground_1 > 500:
-                 #White
-                 pass
+                # White
+                pass
             else:
-                 #Black
-                 pass
+                # Black
+                pass
+
     '''
     Initialization of the Thymio
     '''
+
     def setup(self):
         print("Setting up")
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -125,14 +126,17 @@ class Thymio:
         # Currently only the error is logged. Maybe interrupt the mainloop here
         print("dbus error: %s" % str(e))
 
-#----------------------- Lidar init -------------------------
+
+# ----------------------- Lidar init -------------------------
 
 PORT_NAME = '/dev/ttyUSB0'
 lidar = RPLidar(None, PORT_NAME)
 
-scan_data = [0]*360 # store the lidar readings
+scan_data = [0] * 360  # store the lidar readings
 
 import csv
+
+
 # Scan using lidar
 def lidarScan():
     print("Starting background lidar scanning")
@@ -145,13 +149,16 @@ def lidarScan():
         with open('lidar.csv', 'a') as f:
             writer = csv.writer(f)
             writer.writerow(scan_data)
-#----------------------- Camera init ------------------------
+
+
+# ----------------------- Camera init ------------------------
 
 # initialize camera & time intervals for image capture
 visible_april_tags = []
 print('Camera starting up')
 start_time = time.time()
 camera = PiCamera()
+
 
 def takePicture():
     camera.start_preview()
@@ -168,9 +175,10 @@ def takePicture():
     options = apriltag.DetectorOptions(families="tag36h11")
     detector = apriltag.Detector(options)
     results = detector.detect(gray)
-    
+
     # print("{} total AprilTags detected".format(len(results)))
     return results
+
 
 # Loop which takes images with a delay
 def findtag():
@@ -180,14 +188,15 @@ def findtag():
         sleep(0.1)
         visible_april_tags = takePicture()
         for tag in visible_april_tags:
-            
+
             if tag[1] != 0:
                 # for a in tag:
                 #     print(a)
                 print("FOUND!", tag[1])
                 # print("Tagsize", tag.tagsize)
 
-#--------------------- init script end ----------------------
+
+# --------------------- init script end ----------------------
 
 # ------------------ Main loop ------------------------------
 
@@ -197,6 +206,7 @@ robot_speed = 600
 MAX_ROBOT_SPEED = 600
 
 particles = generate_random_particles(100)
+
 
 def main():
     global particles
@@ -234,33 +244,34 @@ def main():
 
             l_radians_per_second = left_wheel_speed / MAX_ROBOT_SPEED * 9.53
             r_radians_per_second = right_wheel_speed / MAX_ROBOT_SPEED * 9.53
-            
+
             particles = list(map(lambda p: single_sim_step(*p, l_radians_per_second, r_radians_per_second), particles))
-            
+
             with open('particles.csv', 'a') as f:
                 writer = csv.writer(f)
                 writer.writerow(particles)
-            
+
             sleep(0.1)
     except KeyboardInterrupt:
-        tear_down(robot)    
+        tear_down(robot)
     except Exception as e:
         tear_down(robot)
         raise e
-    
+
+
 def tear_down(robot):
-        print("Stopping robot")
-        robot.stop()
-        sleep(1)
-        lidar.stop()
-        lidar.disconnect()
-        os.system("pkill -n asebamedulla")
-        print("asebamedulla killed")
+    print("Stopping robot")
+    robot.stop()
+    sleep(1)
+    lidar.stop()
+    lidar.disconnect()
+    os.system("pkill -n asebamedulla")
+    print("asebamedulla killed")
 
 
 # ------------------- Main loop end ------------------------
 
-if __name__ == '__main__' or  __name__ == 'real.start':
+if __name__ == '__main__' or __name__ == 'real.start':
     main()
 
 # -------------------

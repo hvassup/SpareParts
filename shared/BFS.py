@@ -1,8 +1,9 @@
 from collections import deque
 
+
 # BFS which finds the first path that solves the game
 def BFS(start_pos, to_pos, get_next_states):
-    path = (start_pos, )
+    path = (start_pos,)
     queue = deque([])
     queue.append((start_pos, path))
 
