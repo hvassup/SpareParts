@@ -10,3 +10,5 @@
 /modules.xml
 /SpareParts.iml
 /vcs.xml
+/inspectionProfiles/Project_Default.xml
+/pylint.xml
