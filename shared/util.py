@@ -1,5 +1,6 @@
 import math
 from random import random
+from statistics import mean
 
 import cv2
 import numpy as np
@@ -9,7 +10,8 @@ def rand(span):
     return random() * span - span / 2
 
 def sensor_readings_to_motor_speeds(sensors):
-    sensor1, sensor2, sensor3, sensor4, sensor5 = list(map(lambda x: x / 5025, sensors))
+    # 5025
+    sensor1, sensor2, sensor3, sensor4, sensor5 = list(map(lambda x: x / 3000 , sensors))
 
     left_mult = 1 - (sensor4 + sensor5) + sensor3 / 10
     right_mult = 1 - (sensor1 + sensor2) - sensor3 / 10
@@ -67,3 +69,13 @@ def is_point_inside_rectangle(px, py, pos, size):
     rw, rh = size
     if px >= rx and py >= ry and px <= rx + rw and py <= ry + rh:
         return True
+
+def rolling_average(values, new_value):
+    values.insert(0, new_value)
+    del values[5]
+    return mean(values)
+
+def moving_average(a, n=3):
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n

@@ -4,7 +4,7 @@ from cv2 import SparsePyrLKOpticalFlow
 from shared.route_planner import turn_to_point
 from shared.util import sensor_readings_to_motor_speeds
 
-phase = 1 # Should start at 0
+phase = 41 # Should start at 0
 
 def combine_speeds(s1, s2):
     l1, r1 = s1

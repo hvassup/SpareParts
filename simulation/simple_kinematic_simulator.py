@@ -16,6 +16,9 @@ from simulation.bottom_sensor import is_sensor_in_danger_spot
 from simulation.sensor_sim import distance_to_sensor_reading, get_lidar, get_sensor_distance
 from simulation.visualization.pygame_visualizer import PyGameVisualizer, scale_point
 
+from shared.util import calc_rectangle, euclidean_distance, get_lidar_points, is_point_inside_rectangle, moving_average, rand, rotate_point, round_point
+
+from shared.state import W, H, L, world, robot_timestep, simulation_timestep, april_tags
 
 def get_lidar_reading(resolution=360):
     return get_lidar(x, y, q, resolution)
@@ -89,6 +92,36 @@ return_point = (rand(W), rand(H))
 
 particles = generate_random_particles(250)
 
+import csv
+with open('lidar.csv', 'r') as f:
+    with open('particles.csv', 'r') as f1:
+        r = csv.reader(f)
+        r1 = csv.reader(f1)
+        for row in r:
+            lidar_reading = list(map(lambda x: float(x), row))
+            smoothed_lidar_reading = moving_average(lidar_reading, n=3)
+            lidar_points = get_lidar_points(smoothed_lidar_reading, q)
+            
+            visualizer.clear()
+            visualizer.draw_points(lidar_points, (0,0,0))
+            visualizer.show()
+            # print(min(lidar_reading), max(lidar_reading))
+            time.sleep(0.1)
+            
+        for row1 in r1:
+            visualizer.clear()
+            for a in row1:
+                x, y, an = a.lstrip('(').rstrip(')').split(',')
+                print(x, y)
+                visualizer.draw_point(float(x), float(y), (0,0,0))
+            visualizer.show()
+            time.sleep(0.1)
+    
+
+exit()
+
+visible_april_tags = []
+
 # Simulation loop
 for cnt in range(1, 500):
     fps_time = time.time()
@@ -116,7 +149,7 @@ for cnt in range(1, 500):
     center, width_height, _angle = calc_rectangle(lidar_points)
     cx, cy = center
     visualizer.draw_points(lidar_points, (120, 120, 120), x, y)
-
+    
     # Draw camera field of view
     cp1x, cp1y = rotate_point(0, camera_range, q - math.radians(90 + camera_fov))
     cp2x, cp2y = rotate_point(0, camera_range, q - math.radians(90 - camera_fov))
@@ -127,9 +160,10 @@ for cnt in range(1, 500):
     for i, pos in enumerate(april_tags):
         visualizer.draw_point(*pos, (255, 255, 0), 0.02)
         visualizer.draw_text(str(i), scale_point(*pos))
-        if euclidean_distance(*pos, x, y) < camera_range and abs(
-                math.degrees(angle_to_point(x, y, q, *pos))) < camera_fov:
-            visualizer.draw_line(x, y, *pos, (255, 0, 0))
+        if euclidean_distance(*pos, x, y) < camera_range and abs(math.degrees(angle_to_point(x, y, q, *pos))) < camera_fov:
+            visualizer.draw_line(x, y, *pos, (255, 0 ,0))
+            visible_april_tags.append([0, i])
+            # print(f'I can see {i}')
 
     # Draw buddy
     if not is_buddy_picked_up:
@@ -181,8 +215,8 @@ for cnt in range(1, 500):
     else:
         visualizer.draw_point(*sensor2_pos, (50, 120, 255))
         world_map.mark_as_safe(*sensor2_pos)
-
-    weights = [compare_states(p, lidar_reading) for p in particles]
+    
+    weights = [compare_states(p, lidar_reading, visible_april_tags) for p in particles]
     # print('min:', min(weights), 'max:', max(weights))
 
     m = max(weights)
