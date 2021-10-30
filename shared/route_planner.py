@@ -1,6 +1,6 @@
 import math
 
-from shared.util import clamp
+from shared.util import clamp, angle_difference
 
 test_route = []
 
@@ -9,8 +9,7 @@ def angle_to_point(currX, currY, angle, toX, toY):
     to_angle = math.pi / 2 - math.atan2(toX - currX, toY - currY)
     angle = angle % (2 * math.pi)
 
-    angle_diff = to_angle - angle
-    return (angle_diff + math.pi) % (2 * math.pi) - math.pi
+    return angle_difference(to_angle, angle)
 
 
 def turn_to_point(currX, currY, angle, toX, toY):

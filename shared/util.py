@@ -91,3 +91,8 @@ def moving_average(a, n=3):
     ret = np.cumsum(a, dtype=float)
     ret[n:] = ret[n:] - ret[:-n]
     return ret[n - 1:] / n
+
+
+def angle_difference(a1, a2):
+    diff = a1 - a2
+    return (diff + math.pi) % (2 * math.pi) - math.pi

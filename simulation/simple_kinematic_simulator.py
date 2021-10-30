@@ -8,7 +8,7 @@ from shared.map import Map
 from shared.movement import get_wheel_speeds
 from shared.particle_filtering import compare_states, generate_random_particles, resample
 from shared.route_planner import angle_to_point
-from shared.state import W, H, L, world, robot_timestep, simulation_timestep
+from shared.state import W, H, L, world, robot_timestep, simulation_timestep, april_tag_angles, april_tags
 from shared.step import single_sim_step
 from shared.util import calc_rectangle, euclidean_distance, get_lidar_points, is_point_inside_rectangle, rand, \
     rotate_point, round_point
@@ -71,11 +71,6 @@ for _y in range(0, world_map.map.shape[1]):
             if is_point_inside_rectangle(*real_point, *zone):
                 world_map.mark_as_danger(*real_point)
 
-april_tags = [(W / 2, 0), (W / 2, H / 3),
-              (W * 2 / 5, H / 2), (W / 5, H / 2), (0, H / 2), (-W / 5, H / 2), (-W * 2 / 5, H / 2),
-              (-W / 2, H / 3), (-W / 2, 0), (-W / 2, -H / 3),
-              (-W * 2 / 5, -H / 2), (-W / 5, -H / 2), (0, -H / 2), (W / 5, -H / 2), (W * 2 / 5, -H / 2),
-              (W / 2, -H / 3)]
 
 camera_range = 0.50
 camera_fov = 25
@@ -118,6 +113,7 @@ particles = generate_random_particles(250)
 # exit()
 
 visible_april_tags = []
+visible_tags = set()
 
 # Simulation loop
 for cnt in range(1, 500):
@@ -160,8 +156,13 @@ for cnt in range(1, 500):
         if euclidean_distance(*pos, x, y) < camera_range and abs(
                 math.degrees(angle_to_point(x, y, q, *pos))) < camera_fov:
             visualizer.draw_line(x, y, *pos, (255, 0, 0))
-            visible_april_tags.append([0, i])
+            visible_tags.add(i)
+            print(math.degrees(q) % 360, april_tag_angles[i])
             # print(f'I can see {i}')
+        else:
+            if i in visible_tags:
+                visible_tags.remove(i)
+
 
     # Draw buddy
     if not is_buddy_picked_up:
@@ -214,13 +215,15 @@ for cnt in range(1, 500):
         visualizer.draw_point(*sensor2_pos, (50, 120, 255))
         world_map.mark_as_safe(*sensor2_pos)
 
-    weights = [compare_states(p, lidar_reading, visible_april_tags) for p in particles]
+    visible_april_tags = list(map(lambda x: [0, x], visible_tags))
+    weights, diffs = zip(*[compare_states(p, lidar_reading, visible_april_tags) for p in particles])
     # print('min:', min(weights), 'max:', max(weights))
 
     m = max(weights)
     for i in range(0, len(particles)):
         p = particles[i]
-        visualizer.draw_point(p[0], p[1], (150, 0, 150), weights[i] / m / 80)
+        diff = diffs[i]
+        visualizer.draw_point(p[0], p[1], (150, diff / 180 * 255, 150), weights[i] / m / 80)
 
     particles = resample(particles, weights)
 

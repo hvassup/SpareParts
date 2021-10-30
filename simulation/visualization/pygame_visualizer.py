@@ -14,7 +14,7 @@ def scale_size(w, h):
     return w * scale, h * scale
 
 
-class PyGameVisualizer():
+class PyGameVisualizer:
     def __init__(self):
         self.a = 0
         pygame.init()
