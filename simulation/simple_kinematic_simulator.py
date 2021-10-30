@@ -3,26 +3,27 @@ import time
 
 from numpy import sin, cos
 from shapely.geometry import Point
+
 from shared.map import Map
 from shared.movement import get_wheel_speeds
 from shared.particle_filtering import compare_states, generate_random_particles, resample
 from shared.route_planner import angle_to_point
+from shared.state import W, H, L, world, robot_timestep, simulation_timestep
 from shared.step import single_sim_step
+from shared.util import calc_rectangle, euclidean_distance, get_lidar_points, is_point_inside_rectangle, rand, \
+    rotate_point, round_point
 from simulation.bottom_sensor import is_sensor_in_danger_spot
-from simulation.danger_zones import generate_random_danger_spots
-
 from simulation.sensor_sim import distance_to_sensor_reading, get_lidar, get_sensor_distance
 from simulation.visualization.pygame_visualizer import PyGameVisualizer, scale_point
 
-from shared.util import calc_rectangle, euclidean_distance, get_lidar_points, is_point_inside_rectangle, rand, rotate_point, round_point
-
-from shared.state import W, H, L, world, robot_timestep, simulation_timestep
 
 def get_lidar_reading(resolution=360):
     return get_lidar(x, y, q, resolution)
 
+
 def get_front_sensor(angle):
     return distance_to_sensor_reading(get_sensor_distance(x, y, q, angle))
+
 
 # Variables
 
@@ -30,7 +31,7 @@ x = 0.0  # robot position in meters - x direction - positive to the right
 y = 0.0  # robot position in meters - y direction - positive up
 q = 0.0  # robot heading with respect to x-axis in radians
 
-left_wheel_velocity = 2   # robot left wheel velocity in radians/s
+left_wheel_velocity = 2  # robot left wheel velocity in radians/s
 right_wheel_velocity = 2  # robot right wheel velocity in radians/s
 
 
@@ -43,8 +44,9 @@ def simulationstep(_left_wheel_velocity, _right_wheel_velocity):
 
     for step in range(int(robot_timestep / simulation_timestep)):  # step model time/timestep times
         x, y, q = single_sim_step(x, y, q, _left_wheel_velocity, _right_wheel_velocity)
-    
+
         particles = list(map(lambda p: single_sim_step(*p, _left_wheel_velocity, _right_wheel_velocity), particles))
+
 
 # spots = generate_random_danger_spots(W, H)
 spots = []
@@ -70,10 +72,10 @@ for _y in range(0, world_map.map.shape[1]):
                 world_map.mark_as_danger(*real_point)
 
 april_tags = [(W / 2, 0), (W / 2, H / 3),
-(W * 2 / 5, H / 2), (W / 5, H / 2), (0, H / 2), (-W / 5, H / 2), (-W * 2 / 5, H / 2),
-(-W / 2, H / 3), (-W / 2, 0), (-W / 2, -H / 3),
-(-W * 2 / 5, -H / 2), (-W / 5, -H / 2), (0, -H / 2), (W / 5, -H / 2), (W * 2 / 5, -H / 2), 
-(W / 2, -H / 3)]
+              (W * 2 / 5, H / 2), (W / 5, H / 2), (0, H / 2), (-W / 5, H / 2), (-W * 2 / 5, H / 2),
+              (-W / 2, H / 3), (-W / 2, 0), (-W / 2, -H / 3),
+              (-W * 2 / 5, -H / 2), (-W / 5, -H / 2), (0, -H / 2), (W / 5, -H / 2), (W * 2 / 5, -H / 2),
+              (W / 2, -H / 3)]
 
 camera_range = 0.50
 camera_fov = 25
@@ -85,13 +87,14 @@ is_buddy_picked_up = False
 
 return_point = (rand(W), rand(H))
 
-particles = generate_random_particles(50)
+particles = generate_random_particles(250)
 
 # Simulation loop
 for cnt in range(1, 500):
     fps_time = time.time()
-    sensors = [get_front_sensor(30), get_front_sensor(15), get_front_sensor(0), get_front_sensor(-15), get_front_sensor(30)]
-    
+    sensors = [get_front_sensor(30), get_front_sensor(15), get_front_sensor(0), get_front_sensor(-15),
+               get_front_sensor(30)]
+
     # Init visualization
     visualizer.clear()
 
@@ -124,9 +127,9 @@ for cnt in range(1, 500):
     for i, pos in enumerate(april_tags):
         visualizer.draw_point(*pos, (255, 255, 0), 0.02)
         visualizer.draw_text(str(i), scale_point(*pos))
-        if euclidean_distance(*pos, x, y) < camera_range and abs(math.degrees(angle_to_point(x, y, q, *pos))) < camera_fov:
-            visualizer.draw_line(x, y, *pos, (255, 0 ,0))
-            # print(f'I can see {i}')
+        if euclidean_distance(*pos, x, y) < camera_range and abs(
+                math.degrees(angle_to_point(x, y, q, *pos))) < camera_fov:
+            visualizer.draw_line(x, y, *pos, (255, 0, 0))
 
     # Draw buddy
     if not is_buddy_picked_up:
@@ -137,16 +140,16 @@ for cnt in range(1, 500):
 
     # Draw danger spots
     visualizer.draw_rectangles(spots, (120, 0, 0))
-    
+
     # visualizer.draw_point(-cx, -cy, (0, 0, 255))
     # Draw robot
     visualizer.draw_point(x, y, (0, 255, 0), L)
 
     # Path finding
     target_pos = path_to_explore[path_index]
-    
+
     distance_to_goal = euclidean_distance(*target_pos, x, y)
-    
+
     if distance_to_goal < L / 10:
         path_index += 1
 
@@ -162,7 +165,7 @@ for cnt in range(1, 500):
 
     is_bottom1_sensor_danger = is_sensor_in_danger_spot(*sensor1_pos, spots)
     is_bottom2_sensor_danger = is_sensor_in_danger_spot(*sensor2_pos, spots)
-    
+
     if is_bottom1_sensor_danger:
         visualizer.draw_point(*sensor1_pos, (255, 0, 0))
         world_map.mark_as_danger(*sensor1_pos)
@@ -171,14 +174,14 @@ for cnt in range(1, 500):
         world_map.mark_as_safe(*sensor1_pos)
         # if return_point == None:
         #     return_point = sensor1_pos
-        
+
     if is_bottom2_sensor_danger:
         visualizer.draw_point(*sensor2_pos, (255, 0, 0))
         world_map.mark_as_danger(*sensor2_pos)
     else:
         visualizer.draw_point(*sensor2_pos, (50, 120, 255))
         world_map.mark_as_safe(*sensor2_pos)
-    
+
     weights = [compare_states(p, lidar_reading) for p in particles]
     # print('min:', min(weights), 'max:', max(weights))
 
@@ -186,7 +189,7 @@ for cnt in range(1, 500):
     for i in range(0, len(particles)):
         p = particles[i]
         visualizer.draw_point(p[0], p[1], (150, 0, 150), weights[i] / m / 80)
-    
+
     particles = resample(particles, weights)
 
     fps_end_time = time.time() - fps_time
@@ -201,13 +204,11 @@ for cnt in range(1, 500):
 
     visualizer.show()
 
-    
-    left_mult, right_mult = get_wheel_speeds(x, y, q, target_pos, sensors, is_bottom1_sensor_danger, is_bottom2_sensor_danger)
+    left_mult, right_mult = get_wheel_speeds(x, y, q, target_pos, sensors, is_bottom1_sensor_danger,
+                                             is_bottom2_sensor_danger)
 
     # step simulation
-    start_time = time.time()
     simulationstep(left_wheel_velocity * left_mult, right_wheel_velocity * right_mult)
-    print(time.time() - start_time)
 
     # check collision with arena walls
     if world.distance(Point(x, y)) < L / 2:
@@ -218,5 +219,5 @@ for cnt in range(1, 500):
 
     if cnt % 50 == 0:
         file.write(str(x) + ", " + str(y) + ", " + str(cos(q) * 0.05) + ", " + str(sin(q) * 0.05) + "\n")
-    
+
 file.close()
