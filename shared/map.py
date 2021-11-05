@@ -52,3 +52,12 @@ class Map():
         path = BFS(fromPoint, toPoint, self.get_safe_neighbors)
 
         return list(map(lambda x: self.map_cord_to_real(*x), path))
+    
+    def pretty_print(self):
+        for y in range(0, self.map.shape[1]):
+            for x in range(0, self.map.shape[0]):
+                if self.map[x][y] == 0:
+                    print('. ', end='')
+                else:
+                    print('X ', end='')
+            print()

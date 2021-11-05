@@ -11,19 +11,27 @@ def rand(span):
     return random() * span - span / 2
 
 
+def normalize_lidar(x):
+    if x > 0.20:
+        return 0
+    else:
+        return 1 - x * 3
+
 def sensor_readings_to_motor_speeds(sensors):
     # 5025
-    sensor1, sensor2, sensor3, sensor4, sensor5 = list(map(lambda x: x / 3000, sensors))
+    sensor1, sensor2, sensor3, sensor4, sensor5 = list(map(lambda x: x / 5025, sensors))
 
     left_mult = 1 - (sensor4 + sensor5) + sensor3 / 10
     right_mult = 1 - (sensor1 + sensor2) - sensor3 / 10
     return left_mult, right_mult
 
 
+import math
 # Get distance between two points
 def euclidean_distance(x1, y1, x2, y2):
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
+euclidean_distance(0, 0, 0.005069819708289762, 0.01506650516720775)
 
 # Clamp a number between min_val and max_val
 def clamp(n, min_val, max_val):
@@ -61,6 +69,10 @@ def get_lidar_points(readings, robot_dir):
 def find_robot_pos(lidar_distances, angle):
     points = get_lidar_points(lidar_distances, 0)
     center, width_height, _angle = cv2.minAreaRect(np.asarray(points).astype(np.int))
+    rx, ry = rotate_point(*center, angle)
+    return -rx, -ry
+
+def find_robot_pos2(center, angle):
     rx, ry = rotate_point(*center, angle)
     return -rx, -ry
 

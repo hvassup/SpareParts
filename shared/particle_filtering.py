@@ -78,10 +78,11 @@ def compare_states(s1, lidar_reading, april_tags):
     angle_diff = 0
     if len(april_tags) > 0:
         middle_april_tag = april_tags[round(len(april_tags) / 2)]
-        desired_angle = april_tag_angles[middle_april_tag[1]]
+        if middle_april_tag[1] != 19:
+            desired_angle = april_tag_angles[middle_april_tag[1]]
 
-        angle_diff = math.degrees(abs(angle_difference(desired_angle, angle)))
-        if angle_diff < 90:
-            weight -= max_lidar_reading
+            angle_diff = math.degrees(abs(angle_difference(desired_angle, angle)))
+            if angle_diff < 90:
+                weight -= max_lidar_reading
 
     return normalize_weight(weight, lidar_resolution), angle_diff
