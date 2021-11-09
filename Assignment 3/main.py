@@ -3,7 +3,7 @@ import sys
 
 def run(is_simulation):
     if is_simulation:
-        pass
+        import simulation.simulation
     else:
         import real.start
 

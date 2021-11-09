@@ -17,23 +17,26 @@ action_size = 4
 # Initialize Q table
 Q = np.zeros((state_size, action_size))
 
-def reward(state, action) -> int:
-    if state == State.NO:
-        if action == Action.F:
-            return 100
-        if action == Action.R:
-            return 50
-        if action == Action.L:
-            return 50
-        if action == Action.B:
-            return 10
-    return -10
+def reward(state, new_state, action) -> int:
+    if state != State.NO and new_state == State.NO:
+        return 1
+    else:
+        return -1
+        # if action == Action.F:
+        #     return 100
+        # if action == Action.R:
+        #     return 50
+        # if action == Action.L:
+        #     return 50
+        # if action == Action.B:
+        #     return 10
+    # return -10
 
 def update_q_table(state, action, new_state):
-    Q[state, action] = Q[state, action] + alpha * (reward(new_state, action) + gamma * np.max(Q[new_state, :]) - Q[state, action])
+    Q[state, action] = Q[state, action] + alpha * (reward(state, new_state, action) + gamma * np.max(Q[new_state, :]) - Q[state, action])
     for y in range(0, Q.shape[1]):
         for x in range(0, Q.shape[1]):
-            print(Q[x][y], end='\t')
+            print(round(Q[x][y]), end='\t')
         print()
 
 
