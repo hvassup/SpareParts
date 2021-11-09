@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import os
+from shared.action_states import get_current_state
 
 # initialize asebamedulla in background and wait 0.3s to let asebamedulla startup
 os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
@@ -54,23 +55,16 @@ class Thymio:
         return self.aseba.GetVariable("thymio-II", "prox.horizontal")[:5]
     
     def get_state(self):
-        sensor1, sensor2, sensor3, sensor4, sensor5 = self.get_front_sensors()
-        if sensor3 > 0:
-            return State.OF
-        if sensor1 > 0 or sensor2 > 0:
-            return State.OL
-        if sensor4 > 0 or sensor5 > 0:
-            return State.OR
-        return State.NO
+        return get_current_state(self.get_front_sensors())
     
     def perform_action(self, action):
-        if action == Action.F:
+        if action == Action.Forward:
             self.go_forward()
-        elif action == Action.L:
+        elif action == Action.Left:
             self.go_left()
-        elif action == Action.R:
+        elif action == Action.Right:
             self.go_right()
-        elif action == Action.B:
+        elif action == Action.Back:
             self.go_backward()
     
     def setup(self):

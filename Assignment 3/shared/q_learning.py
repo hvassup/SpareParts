@@ -13,29 +13,40 @@ temperature = 0
 # Discount factor
 gamma = 0.9
 
-state_size = 4
-action_size = 4
+state_size = len(State)
+action_size = len(Action)
 
 # Initialize Q table
 Q = np.random.randn(state_size, action_size)
 
 def reward(state, new_state, action) -> int:
-    reward = 0
-
-    if state != State.NO and new_state == State.NO:
-        reward = 10
-    elif state == State.NO and new_state == State.NO:
-        if action == Action.F:
-            reward = 1
-    elif state == State.NO and new_state != State.NO:
-        reward = 0
+    if state != State.NoObject and new_state == State.NoObject:
+        return 10
+    elif state == State.NoObject and new_state == State.NoObject:
+        if action == Action.Forward:
+            return 11
     else:
-        reward = -1
+        return -10
     
-    if action == Action.B:
-        reward -= 0.1
+    return 0
+    # reward = 0
+
     
-    return reward
+    # if state != State.NoObject and new_state == State.NoObject:
+    #     reward = 10
+    #     if action == Action.Right or action == Action.Left:
+    #         reward = 11
+    # elif state == State.NoObject and new_state == State.NoObject:
+    #     if action == Action.Forward:
+    #         reward = 1
+
+    # else:
+    #     reward = -10
+    
+    # if action == Action.Back:
+    #     reward -= 1
+    
+    # return reward
         # if action == Action.F:
         #     return 100
         # if action == Action.R:
@@ -48,14 +59,15 @@ def reward(state, new_state, action) -> int:
 
 def update_q_table(state, action, new_state):
     global temperature, epsilon
-    temperature = min(temperature + 1, 100)
-    epsilon = 1 - (temperature * 0.009)
+    temperature = min(temperature + 1, 1000)
+    epsilon = 1 - (temperature * 0.0009)
 
     Q[state, action] = Q[state, action] + alpha * (reward(state, new_state, action) + gamma * np.max(Q[new_state, :]) - Q[state, action])
-    for y in range(0, Q.shape[1]):
-        for x in range(0, Q.shape[1]):
-            print(round(Q[x][y], 2), end='\t')
-        print()
+    print(Q)
+    # for y in range(0, Q.shape[1]):
+    #     for x in range(0, Q.shape[1]):
+    #         print(round(Q[x][y], 2), end='\t')
+    #     print()
 
 
 def get_next_action(state):

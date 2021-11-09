@@ -1,13 +1,13 @@
 from enum import IntEnum
 
 class State(IntEnum):
-    OL = 0
-    OR = 1
-    OF = 2
-    NO = 3
+    ObjectLeft = 0
+    ObjectRight = 1
+    ObjectFront = 2
+    NoObject = 3
 
 class Action(IntEnum):
-    F = 0
-    L = 1
-    R = 2
-    B = 3
+    Forward = 0
+    Left = 1
+    Right = 2
+    # Back = 3
