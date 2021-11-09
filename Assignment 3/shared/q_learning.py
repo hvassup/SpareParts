@@ -22,6 +22,8 @@ def reward(state, new_state, action) -> int:
         return 1
     elif state == State.NO and new_state == State.NO:
         return 0
+    elif state == State.NO and new_state != State.NO:
+        return 0
     else:
         return -1
         # if action == Action.F:
