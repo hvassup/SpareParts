@@ -15,11 +15,13 @@ state_size = 4
 action_size = 4
 
 # Initialize Q table
-Q = np.zeros((state_size, action_size))
+Q = np.random.randn(state_size, action_size)
 
 def reward(state, new_state, action) -> int:
     if state != State.NO and new_state == State.NO:
         return 1
+    elif state == State.NO and new_state == State.NO:
+        return 0
     else:
         return -1
         # if action == Action.F:
