@@ -32,22 +32,22 @@ class Thymio:
     
     def go_left(self):
         self.drive(-1, 1)
-        sleep(0.5)
+        sleep(1)
         self.stop()
 
     def go_forward(self):
         self.drive(1, 1)
-        sleep(0.5)
+        sleep(1)
         self.stop()
 
     def go_right(self):
         self.drive(1, -1)
-        sleep(0.5)
+        sleep(1)
         self.stop()
 
     def go_backward(self):
         self.drive(-1, -1)
-        sleep(0.5)
+        sleep(1)
         self.stop()
     
     def get_front_sensors(self):
