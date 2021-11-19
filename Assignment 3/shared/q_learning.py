@@ -57,17 +57,22 @@ def reward(state, new_state, action) -> int:
         #     return 10
     # return -10
 
+def print_q_table():
+    print('############')
+    row_format ="{:>20}" * (len(Action) + 1)
+    print(row_format.format("", *[str(e) for e in Action]))
+    for y in range(0, Q.shape[0]):
+        values = np.round(Q[y][:], 2)
+        print(row_format.format(str(State(y)), *values))
+    print('############')
+
 def update_q_table(state, action, new_state):
     global temperature, epsilon
     temperature = min(temperature + 1, 1000)
     epsilon = 1 - (temperature * 0.0009)
 
     Q[state, action] = Q[state, action] + alpha * (reward(state, new_state, action) + gamma * np.max(Q[new_state, :]) - Q[state, action])
-    print(Q)
-    # for y in range(0, Q.shape[1]):
-    #     for x in range(0, Q.shape[1]):
-    #         print(round(Q[x][y], 2), end='\t')
-    #     print()
+    print_q_table()
 
 
 def get_next_action(state):

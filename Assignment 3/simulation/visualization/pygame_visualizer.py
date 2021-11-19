@@ -2,7 +2,7 @@ import sys
 
 import pygame
 
-offset = 400
+offset = 350
 scale = 400
 
 

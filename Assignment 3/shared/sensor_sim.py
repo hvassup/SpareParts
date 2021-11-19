@@ -1,6 +1,7 @@
 from math import radians, sqrt, cos, sin
 
 from shapely.geometry.linestring import LineString
+import shapely
 
 from shared.state import W, H, world
 
@@ -51,9 +52,15 @@ def get_sensor_distance(x, y, q, angle):
     # a line from robot to a point outside arena in direction of q
     s = world.intersection(ray)
 
-    distance = sqrt((s.x - x) ** 2 + (s.y - y) ** 2)  # distance to wall
+    if type(s) is shapely.geometry.multipoint.MultiPoint:
+        # print(s)
+        s = s[-1]
 
-    return distance
+    try:
+        distance = sqrt((s.x - x) ** 2 + (s.y - y) ** 2) # distance to wall
+        return distance
+    except:
+        return 0.01
 
 
 def get_lidar(x, y, q, resolution):
