@@ -5,7 +5,7 @@ def run(is_simulation):
     if is_simulation:
         import simulation.simulation
     else:
-        import real.start
+        import real.LED_start
 
 
 if len(sys.argv) == 2 and sys.argv[1] == 'Simulation':

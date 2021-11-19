@@ -4,11 +4,6 @@ import os
 # initialize asebamedulla in background and wait 0.3s to let asebamedulla startup
 os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
 
-from shared.action_states import get_current_state
-
-from shared.enums import State, Action
-from shared.q_learning import get_next_action, update_q_table
-
 from time import sleep
 
 import dbus
@@ -53,18 +48,13 @@ class Thymio:
     def get_front_sensors(self):
         return self.aseba.GetVariable("thymio-II", "prox.horizontal")[:5]
     
-    def get_state(self):
-        return get_current_state(self.get_front_sensors())
-    
-    def perform_action(self, action):
-        if action == Action.Forward:
-            self.go_forward()
-        elif action == Action.Left:
-            self.go_left()
-        elif action == Action.Right:
-            self.go_right()
-        elif action == Action.Back:
-            self.go_backward()
+    def led_control(self):
+        led = self.aseba.getLED("leds.top")
+        led_bleft = self.aseba.getLED("leds.bottom.left")
+        led_bright = self.aseba.getLED("leds.bottom.right")
+        led.set(0, 0, 255)
+        led_bleft.set(0, 0, 255)
+        led_bright.set(0, 0, 255)
     
     def setup(self):
         print("Setting up")
@@ -98,30 +88,13 @@ class Thymio:
 
 
 
-# States
-# OL - Object Left
-# Anything on the two left sensors and nothing on the middle
-# OR - Object Right
-# Anything on the two right sensors and nothing on the middle
-# OR - Object Right
-# Anything on the front sensor
-# NO - Object Right
-# Nothing on any sensors
-
-
 def main():
     try:
         robot = Thymio()
         sleep(1)
 
         while True:
-            current_state = robot.get_state()
-            action_to_perform = Action(get_next_action(current_state))
-            robot.perform_action(action_to_perform)
-            next_state = robot.get_state()
-            print('current_state:', current_state, 'action_to_perform:', action_to_perform, 'next_state:', next_state)
-            update_q_table(current_state, action_to_perform, next_state)
-
+            ## Do stuff here
             sleep(0.1)
     except KeyboardInterrupt:
         tear_down(robot)
@@ -141,7 +114,7 @@ def tear_down(robot):
 # ------------------- Main loop end ------------------------
 
 print(__name__)
-if __name__ == 'real.start':
+if __name__ == 'real.LED_start':
     main()
 
 # -------------------
