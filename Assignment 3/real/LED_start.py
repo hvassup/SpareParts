@@ -94,7 +94,7 @@ def main():
         sleep(1)
 
         while True:
-            ## Do stuff here
+            robot.led_control()
             sleep(0.1)
     except KeyboardInterrupt:
         tear_down(robot)
