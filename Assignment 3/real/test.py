@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import os
-from shared.action_states import get_current_state
 
 # initialize asebamedulla in background and wait 0.3s to let asebamedulla startup
 os.system("(asebamedulla ser:name=Thymio-II &) && sleep 0.3")
@@ -115,8 +114,8 @@ def tear_down(robot):
 
 # ------------------- Main loop end ------------------------
 
-print(__name__)
-if __name__ == 'real.start':
-    main()
+#print(__name__)
+#if __name__ == 'real.start':
+#    main()
 
 # -------------------
